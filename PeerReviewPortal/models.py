@@ -11,7 +11,9 @@ from SubmissionPortal.models import AuthorSubmission
 
 
 class JournalSubmission(models.Model):
-    author_submission = models.OneToOneField(AuthorSubmission, on_delete=models.CASCADE)
+    author_submission = models.OneToOneField(
+        AuthorSubmission, related_name="journal_submission", on_delete=models.CASCADE
+    )
     reviewers = models.ManyToManyField(Reviewer, related_name="submissions")
     stage = models.CharField(_("stage"), max_length=255)
     is_accepted = models.DateTimeField(

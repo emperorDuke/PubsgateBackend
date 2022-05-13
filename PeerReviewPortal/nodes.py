@@ -1,6 +1,7 @@
 import graphene
 
 from graphene_django import DjangoObjectType
+
 from PeerReviewPortal.models import (
     EditorReport,
     JournalSubmission,
@@ -33,7 +34,9 @@ class JournalSubmissionNode(DjangoObjectType):
             "id",
             "author_submission",
             "reviewers",
+            "stage",
             "is_accepted",
+            "journal",
             "editorial_members",
             "created_at",
             "editors_reports",

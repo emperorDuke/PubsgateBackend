@@ -1,4 +1,5 @@
 from functools import wraps
+
 from graphql_jwt.decorators import context
 from graphql_jwt.exceptions import PermissionDenied
 from graphql_relay import from_global_id
@@ -25,7 +26,7 @@ def has_handling_permission(calls_relay_mutation=False, input_key="submission_id
             if not submission_id:
                 raise PermissionDenied("Submission ID is required")
 
-            handler = JournalSubmissionEditorialTeam.filter(
+            handler = JournalSubmissionEditorialTeam.objects.filter(
                 journal_submission__pk=from_global_id(submission_id).id,
                 editor__user__pk=context.user.pk,
                 permissions__code_name__in=(

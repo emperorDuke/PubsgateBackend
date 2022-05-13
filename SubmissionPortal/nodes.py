@@ -11,6 +11,10 @@ from .models import (
 
 
 class SubmissionNode(DjangoObjectType):
+    """
+    Author submission node
+    """
+
     class Meta:
         model = AuthorSubmission
         fields = (
@@ -23,6 +27,7 @@ class SubmissionNode(DjangoObjectType):
             "article_type",
         )
         interfaces = (graphene.relay.Node,)
+        convert_choices_to_enum = False
 
 
 class SubmissionAgreementNode(DjangoObjectType):

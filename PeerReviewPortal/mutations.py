@@ -1,11 +1,12 @@
-import base64
 import graphene
 
 from django.utils import timezone
 from django.core.mail import EmailMultiAlternatives
+from django.core.signing import Signer
 
 from graphql_jwt.decorators import login_required
 from graphql_relay import from_global_id
+from Contents.models import ManuscriptSection
 from Journals.models.journals import JournalReportQuestion
 
 from Journals.permissions import (
@@ -40,16 +41,16 @@ class CreateJournalSubmissionMutation(graphene.relay.ClientIDMutation):
     message = graphene.String()
 
     class Input:
-        submission_id = graphene.ID(required=True)
+        author_submission_id = graphene.ID(required=True)
 
     @classmethod
     @login_required
     def mutate(cls, root, info, input):
-        submission_id = input.get("submission_id")
+        author_submission_id = input.get("author_submission_id")
 
         user = info.context.user
         author_submission = user.submissions.select_related("manuscript__journal").get(
-            pk=from_global_id(submission_id).id
+            pk=from_global_id(author_submission_id).id
         )
 
         journal_submission = JournalSubmission.objects.create(
@@ -82,33 +83,42 @@ class InviteReviewerMutation(graphene.relay.ClientIDMutation):
     @login_required
     def mutate(cls, root, info, input):
         email_addresses = input.get("email_addresses")
-        journal_id = base64.b64encode(input.get("journal_id"))
-        submission_id = base64.b64encode(input.get("submission_id"))
 
-        journal = Journal.objects.get(pk=from_global_id(journal_id).id)
-        submission = JournalSubmission.objects.selected_related(
-            "author_submission__manuscript"
-        ).get(pk=from_global_id(submission_id).id)
+        signer = Signer()
 
-        abstract_section = submission.author_submission.manuscript.sections.get(
-            section__name="abstract"
+        journal_id = input.get("journal_id")
+        submission_id = input.get("submission_id")
+
+        signed_JSID = signer.sign_object(
+            {
+                "journal_id": from_global_id(journal_id).id,
+                "submission_id": from_global_id(submission_id).id,
+            }
         )
 
-        abstract = abstract_section.contents
-        url = "/peer-review/invite?JID={1}&SID={2}".format(journal_id, submission_id)
+        journal = Journal.objects.get(pk=from_global_id(journal_id).id)
+        submission = JournalSubmission.objects.get(pk=from_global_id(submission_id).id)
 
-        from_email = "{1}@pubsgate.com".format(journal.name)
-        subject = "Invitation to be a reviewer for {1} journal".format(journal.name)
+        abstract_section = ManuscriptSection.objects.get(
+            manuscript__author_submission__journal_submission__pk=submission.pk,
+            section__name="abstract",
+        )
+
+        abstract = abstract_section.content
+        url = "/peer-review/invite?JSID={0}".format(signed_JSID)
+
+        from_email = "{0}@pubsgate.com".format(journal.name)
+        subject = "Invitation to be a reviewer for {0} journal".format(journal.name)
         text_content = "We are inviting you to review a manuscript"
         to = email_addresses
         html_content = (
             "<div><p> We are inviting you to review a manuscript,"
             "below this message is the abstract click on the link below to accept out invitation</p>"
-            "<p>{1}</p><a>{2}</a></div>"
+            "<p>{0}</p><a>{1}</a></div>"
         )
 
-        msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
-        msg.attach_alternative(html_content.format(abstract, url))
+        msg = EmailMultiAlternatives(subject, text_content, from_email, to)
+        msg.attach_alternative(html_content.format(abstract, url), "text/html")
         msg.send()
 
         return InviteReviewerMutation(message="success")
@@ -123,21 +133,24 @@ class AcceptReviewerInvitationMutation(graphene.relay.ClientIDMutation):
     submission = graphene.Field(JournalSubmissionNode)
 
     class Input:
-        submission_id = graphene.ID(required=True)
-        journal_id = graphene.ID(required=True)
+        jsid = graphene.String(required=True)
 
     @classmethod
     @reviewer_is_required
     @login_required
     def mutate(cls, root, info, input):
-        submission_id = input.get("submission_id")
-        journal_id = input.get("journal_id")
+        signer = Signer()
+
+        jsid = signer.unsign_object(input.get("jsid"))
+
+        submission_id = jsid.get("submission_id")
+        journal_id = jsid.get("journal_id")
 
         reviewer = info.context.user.reviewer
 
         submission = JournalSubmission.objects.get(
-            pk=from_global_id(submission_id).id,
-            journal__pk=from_global_id(journal_id).id,
+            pk=submission_id,
+            journal__pk=journal_id,
         )
 
         submission.reviewers.add(reviewer)
@@ -174,7 +187,7 @@ class AcceptSubmissionMutation(graphene.relay.ClientIDMutation):
 
         message = "success" if submission else "failed"
 
-        return AcceptSubmissionMutation(message, submission=submission)
+        return AcceptSubmissionMutation(message=message, submission=submission)
 
 
 class AssignHandlingEditorsMutation(graphene.relay.ClientIDMutation):
@@ -259,23 +272,23 @@ class UpdateMemberPermissionMutation(graphene.relay.ClientIDMutation):
             ),
         )
 
-        next_member = EditorialMember.objects.selected_releted("editor__user").get(
+        next_handler = EditorialMember.objects.get(
             pk=from_global_id(editorial_member_id).id,
             journal__pk=from_global_id(journal_id),
         )
 
-        current_member = submission.editorial_members.get(editor__user__pk=user.pk)
+        current_handler = submission.editorial_members.get(editor__user__pk=user.pk)
 
-        next_member.permissions.add(*permissions_qs)
-        current_member.permissions.remove(*permissions_qs)
+        next_handler.permissions.add(*permissions_qs)
+        current_handler.permissions.remove(*permissions_qs)
 
-        next_member_role = next_member.get_role_display()
+        next_handler_role = next_handler.get_role_display()
 
-        submission.stage = "with {0}".format(next_member_role)
+        submission.stage = "with {0}".format(next_handler_role)
         submission.save()
 
         has_notified_editor.send(
-            sender=JournalSubmission, email=next_member.editor.user.email
+            sender=JournalSubmission, email=next_handler.editor.user.email
         )
 
         return UpdateMemberPermissionMutation(message="success", submission=submission)
