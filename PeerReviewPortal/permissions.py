@@ -8,6 +8,12 @@ from PeerReviewPortal.models import JournalSubmission, JournalSubmissionEditoria
 from Journals.permissions import JournalPermissionChoice
 
 
+handling_permissions = (
+    JournalPermissionChoice.GIVE_REPORTS.value,
+    JournalPermissionChoice.EDIT_SUBMISSIONS.value,
+)
+
+
 def has_handling_permission(calls_relay_mutation=False, input_key="submission_id"):
     """
     The editor has a permission to handle the submission
@@ -29,10 +35,7 @@ def has_handling_permission(calls_relay_mutation=False, input_key="submission_id
             handler = JournalSubmissionEditorialTeam.objects.filter(
                 journal_submission__pk=from_global_id(submission_id).id,
                 editor__user__pk=context.user.pk,
-                permissions__code_name__in=(
-                    JournalPermissionChoice.GIVE_REPORTS.value,
-                    JournalPermissionChoice.EDIT_SUBMISSIONS.value,
-                ),
+                permissions__code_name__in=handling_permissions,
             )
 
             if not handler.exists():
@@ -65,7 +68,7 @@ def is_assigned_submission(calls_relay_mutation=False, input_key="submission_id"
                 raise PermissionDenied("Submission ID is required")
 
             submission = JournalSubmission.objects.filter(
-                reviewers__pk=context.user.pk, pk=from_global_id(submission_id).id
+                reviewers__user__pk=context.user.pk, pk=from_global_id(submission_id).id
             )
 
             if not submission.exists():

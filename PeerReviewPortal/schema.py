@@ -11,14 +11,14 @@ from Journals.permissions import (
 )
 
 from .mutations import (
-    AcceptReviewerInvitationMutation,
+    AcceptReviewerInvitation,
     AssignHandlingEditorsMutation,
     CreateJournalSubmissionMutation,
-    AcceptSubmissionMutation,
-    UpdateMemberPermissionMutation,
-    CreateEditorReportMutation,
+    AcceptSubmission,
+    TransferHandlingPermission,
+    CreateEditorReport,
     InviteReviewerMutation,
-    CreateReviewerReportMutation,
+    CreateReviewerReport,
 )
 from .nodes import JournalSubmissionNode, ReviewerReportNode
 from .models import JournalSubmission, ReviewerReport
@@ -28,11 +28,11 @@ from .permissions import is_assigned_submission
 class Mutation(graphene.ObjectType):
     assign_editors = AssignHandlingEditorsMutation.Field()
     invite_reviewers = InviteReviewerMutation.Field()
-    reviewer_accept_invitation = AcceptReviewerInvitationMutation.Field()
-    accept_submission = AcceptSubmissionMutation.Field()
-    transfer_submission = UpdateMemberPermissionMutation.Field()
-    create_editor_report = CreateEditorReportMutation.Field()
-    create_reviewer_report = CreateReviewerReportMutation.Field()
+    accept_reviewer_invitation = AcceptReviewerInvitation.Field()
+    accept_submission = AcceptSubmission.Field()
+    transfer_submission = TransferHandlingPermission.Field()
+    create_editor_report = CreateEditorReport.Field()
+    create_reviewer_report = CreateReviewerReport.Field()
     submit_to_journal = CreateJournalSubmissionMutation.Field()
 
 

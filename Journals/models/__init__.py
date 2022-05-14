@@ -8,6 +8,7 @@ from .journals import (
     JournalViewLog,
     JournalVolume,
     JournalVolumeIssue,
+    JournalReportQuestion,
 )
 from .roles import Role, EditorialMember
 from .reviewers import Reviewer

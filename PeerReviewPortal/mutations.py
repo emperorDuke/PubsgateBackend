@@ -14,12 +14,15 @@ from Journals.permissions import (
     editor_is_required,
     is_editor_journal,
     reviewer_is_required,
-    JournalPermissionChoice,
 )
 
-from Journals.models import Journal, JournalPermission, Editor, EditorialMember
+from Journals.models import Journal, JournalPermission, Editor
 from .input_types import EditorInput, ReportSectionInput
-from .permissions import has_handling_permission, is_assigned_submission
+from .permissions import (
+    has_handling_permission,
+    is_assigned_submission,
+    handling_permissions,
+)
 
 from .models import (
     EditorReport,
@@ -28,7 +31,7 @@ from .models import (
     ReviewerReport,
     ReviewerReportSection,
 )
-from .nodes import JournalSubmissionNode, ReviewerReportNode
+from .nodes import EditorReportNode, JournalSubmissionNode, ReviewerReportNode
 from .signals.signals import has_notified_editor
 
 
@@ -124,7 +127,7 @@ class InviteReviewerMutation(graphene.relay.ClientIDMutation):
         return InviteReviewerMutation(message="success")
 
 
-class AcceptReviewerInvitationMutation(graphene.relay.ClientIDMutation):
+class AcceptReviewerInvitation(graphene.relay.ClientIDMutation):
     """
     Accept invited reviewers
     """
@@ -155,12 +158,10 @@ class AcceptReviewerInvitationMutation(graphene.relay.ClientIDMutation):
 
         submission.reviewers.add(reviewer)
 
-        return AcceptReviewerInvitationMutation(
-            message="success", submission=submission
-        )
+        return AcceptReviewerInvitation(message="success", submission=submission)
 
 
-class AcceptSubmissionMutation(graphene.relay.ClientIDMutation):
+class AcceptSubmission(graphene.relay.ClientIDMutation):
     """
     Accept submissions after critical and thorough reviews
     """
@@ -187,7 +188,7 @@ class AcceptSubmissionMutation(graphene.relay.ClientIDMutation):
 
         message = "success" if submission else "failed"
 
-        return AcceptSubmissionMutation(message=message, submission=submission)
+        return AcceptSubmission(message=message, submission=submission)
 
 
 class AssignHandlingEditorsMutation(graphene.relay.ClientIDMutation):
@@ -236,7 +237,7 @@ class AssignHandlingEditorsMutation(graphene.relay.ClientIDMutation):
         return AssignHandlingEditorsMutation(message=message, submission=submission)
 
 
-class UpdateMemberPermissionMutation(graphene.relay.ClientIDMutation):
+class TransferHandlingPermission(graphene.relay.ClientIDMutation):
     """
     Assign the `edit_submssion` and `give_report` permissions and notify
     the next editorial member. Also, revoke the `edit_submission`and `give_report`
@@ -265,42 +266,38 @@ class UpdateMemberPermissionMutation(graphene.relay.ClientIDMutation):
         user = info.context.user
         submission = JournalSubmission.objects.get(pk=from_global_id(submission_id).id)
         permissions_qs = JournalPermission.objects.filter(
-            journal__pk=from_global_id(journal_id),
-            code_name__in=(
-                JournalPermissionChoice.GIVE_REPORTS.value,
-                JournalPermissionChoice.EDIT_SUBMISSIONS.value,
-            ),
-        )
-
-        next_handler = EditorialMember.objects.get(
-            pk=from_global_id(editorial_member_id).id,
-            journal__pk=from_global_id(journal_id),
+            journal__pk=from_global_id(journal_id).id,
+            code_name__in=handling_permissions,
         )
 
         current_handler = submission.editorial_members.get(editor__user__pk=user.pk)
+        next_handler = submission.editorial_members.get(
+            pk=from_global_id(editorial_member_id).id
+        )
 
         next_handler.permissions.add(*permissions_qs)
         current_handler.permissions.remove(*permissions_qs)
 
         next_handler_role = next_handler.get_role_display()
 
-        submission.stage = "with {0}".format(next_handler_role)
+        submission.stage = "with {}".format(next_handler_role)
         submission.save()
 
         has_notified_editor.send(
             sender=JournalSubmission, email=next_handler.editor.user.email
         )
 
-        return UpdateMemberPermissionMutation(message="success", submission=submission)
+        return TransferHandlingPermission(message="success", submission=submission)
 
 
-class CreateEditorReportMutation(graphene.relay.ClientIDMutation):
+class CreateEditorReport(graphene.relay.ClientIDMutation):
     """
     Create Editor reports or comments on a submission
     """
 
     submission = graphene.Field(JournalSubmissionNode)
     message = graphene.String()
+    report = graphene.Field(EditorReportNode)
 
     class Input:
         report = graphene.String(required=True)
@@ -320,15 +317,17 @@ class CreateEditorReportMutation(graphene.relay.ClientIDMutation):
         submission = JournalSubmission.objects.get(pk=from_global_id(submission_id).id)
 
         report_obj = EditorReport.objects.create(
-            report=report, editor=editor, journal_submission=submission
+            details=report, editor=editor, journal_submission=submission
         )
 
-        message = "successfully created" if report_obj else "failed operation"
+        message = "success" if report_obj else "failed"
 
-        return CreateEditorReportMutation(message=message, submission=submission)
+        return CreateEditorReport(
+            message=message, submission=submission, report=report_obj
+        )
 
 
-class CreateReviewerReportMutation(graphene.relay.ClientIDMutation):
+class CreateReviewerReport(graphene.relay.ClientIDMutation):
     """
     Create reviewer reports for a submission.
     """
@@ -365,7 +364,7 @@ class CreateReviewerReportMutation(graphene.relay.ClientIDMutation):
         ReviewerReportSection.objects.bulk_create(
             [
                 ReviewerReportSection(
-                    reponse=section.get("response"),
+                    response=section.get("response"),
                     report=report,
                     section=sections_qs[i],
                 )
@@ -373,6 +372,6 @@ class CreateReviewerReportMutation(graphene.relay.ClientIDMutation):
             ]
         )
 
-        return CreateReviewerReportMutation(
+        return CreateReviewerReport(
             message="success", submission=submission, report=report
         )

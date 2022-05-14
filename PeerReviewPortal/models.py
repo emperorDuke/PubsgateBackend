@@ -64,7 +64,7 @@ class EditorReport(models.Model):
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    report = models.TextField(_("report"))
+    details = models.TextField(_("report_details"))
     editor = models.ForeignKey(Editor, related_name="reports", on_delete=models.CASCADE)
     journal_submission = models.ForeignKey(
         JournalSubmission, related_name="editors_reports", on_delete=models.CASCADE
@@ -75,7 +75,7 @@ class EditorReport(models.Model):
         db_table = "journal_submission_editor_reports"
         constraints = [
             models.UniqueConstraint(
-                fields=["report", "editor", "journal_submission"],
+                fields=["details", "editor", "journal_submission"],
                 name="unique_editor_report",
             )
         ]
@@ -124,7 +124,7 @@ class ReviewerReportSection(models.Model):
     class Meta:
         verbose_name = _("reviewer_report_section")
         verbose_name_plural = _("reviewer_report_sections")
-        ordering = ("-created_at",)
+        ordering = ("created_at",)
         db_table = "reviewer_report_sections"
         constraints = [
             models.UniqueConstraint(

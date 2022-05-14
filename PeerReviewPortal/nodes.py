@@ -1,6 +1,7 @@
 import graphene
 
 from graphene_django import DjangoObjectType
+from Journals.models.roles import EditorialMember
 
 from PeerReviewPortal.models import (
     EditorReport,
@@ -43,10 +44,17 @@ class JournalSubmissionNode(DjangoObjectType):
         ]
 
 
+class EditorialMemberNode(DjangoObjectType):
+    class Meta:
+        model = EditorialMember
+        interfaces = (graphene.relay.Node,)
+        fields = ("id", "role")
+
+
 class EditorReportNode(DjangoObjectType):
     class Meta:
         model = EditorReport
-        fields = ["id", "report", "created_at", "editor"]
+        fields = ["id", "details", "created_at", "editor"]
         interfaces = (graphene.relay.Node,)
 
 

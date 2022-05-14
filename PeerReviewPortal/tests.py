@@ -1,8 +1,6 @@
 import json
 
 from mixer.backend.django import mixer
-from Journals.models.journals import JournalPermission
-from Journals.permissions.journals import JournalPermissionChoice
 
 from SubmissionPortal.models import AuthorSubmission
 from Cores.models import ArticleType, ArticleTypeSection, SubjectDiscipline
@@ -16,11 +14,25 @@ from graphene_django.utils.testing import GraphQLTestCase
 from graphql_jwt.shortcuts import get_token
 from graphql_relay import to_global_id
 
-from Journals.models import Journal, Editor, EditorialMember, Reviewer
-from Journals.nodes import JournalNode, EditorNode, ReviewerNode
+from Journals.models import (
+    Journal,
+    Editor,
+    EditorialMember,
+    Reviewer,
+    JournalPermission,
+    JournalReportQuestion,
+)
+from Journals.nodes import (
+    JournalNode,
+    EditorNode,
+    ReviewerNode,
+    JournalReportQuestionNode,
+)
 
 from PeerReviewPortal.models import JournalSubmission
-from PeerReviewPortal.nodes import JournalSubmissionNode
+from PeerReviewPortal.nodes import EditorialMemberNode, JournalSubmissionNode
+from PeerReviewPortal.permissions import handling_permissions
+
 from SubmissionPortal.nodes import SubmissionNode
 
 from Contents.models import Manuscript, ManuscriptSection
@@ -156,6 +168,30 @@ def dependencies(cls):
             {"reviewerId": to_global_id(ReviewerNode, cls.reviewers[3].pk)},
         ],
     }
+
+
+def assign_handling_permissions(cls):
+    ## assign editor to the journal ##
+    cls.editor.journals.add(cls.journal)
+    cls.journal.add_editorial_member(cls.editor, EditorialMember.Role.LINE)
+
+    ## journal specific permissions
+    permissions_qs = JournalPermission.objects.filter(
+        journal__pk=cls.journal.pk,
+        code_name__in=handling_permissions,
+    )
+
+    ## get the Line editor role/position assigned to this submission
+    cls.member = cls.submission.editorial_members.filter(
+        role=EditorialMember.Role.LINE
+    ).first()
+
+    ## change the role/position editor
+    cls.member.editor = cls.editor
+    cls.member.save()
+
+    ## grant the editor submission handling permission
+    cls.member.permissions.add(*permissions_qs)
 
 
 # Create your tests here.
@@ -380,10 +416,7 @@ class InviteReviewerMutationTest(GraphQLTestCase):
         ## journal specific permissions
         permissions_qs = JournalPermission.objects.filter(
             journal__pk=self.journal.pk,
-            code_name__in=(
-                JournalPermissionChoice.GIVE_REPORTS.value,
-                JournalPermissionChoice.EDIT_SUBMISSIONS.value,
-            ),
+            code_name__in=handling_permissions,
         )
 
         ## get the Line editor role/position assigned to this submission
@@ -458,8 +491,8 @@ class AcceptReviewerInvitationMutationTest(GraphQLTestCase):
 
         response = self.query(
             """
-            mutation SendMail($input: AcceptReviewerInvitationMutationInput!) {
-                reviewerAcceptInvitation(input: $input) {
+            mutation SendMail($input: AcceptReviewerInvitationInput!) {
+                acceptReviewerInvitation(input: $input) {
                     message
                     submission {
                         stage
@@ -477,7 +510,7 @@ class AcceptReviewerInvitationMutationTest(GraphQLTestCase):
 
         self.assertResponseNoErrors(response)
 
-        content = json.loads(response.content)["data"]["reviewerAcceptInvitation"]
+        content = json.loads(response.content)["data"]["acceptReviewerInvitation"]
 
         self.assertEqual(content["submission"]["stage"], submission.stage)
         self.assertEqual(content["submission"]["journal"]["name"], self.journal.name)
@@ -508,7 +541,7 @@ class AcceptSubmissionTest(GraphQLTestCase):
 
         response = self.query(
             """
-            mutation acceptSubmission($input: AcceptSubmissionMutationInput!) {
+            mutation acceptSubmission($input: AcceptSubmissionInput!) {
                 acceptSubmission(input: $input) {
                     message
                     submission {
@@ -539,6 +572,220 @@ class UpdateMemberPermissionMutation(GraphQLTestCase):
     @classmethod
     def setUpTestData(cls):
         dependencies(cls)
+
+        author_submission = mixer.blend(
+            AuthorSubmission,
+            user=cls.user,
+            article_type=AuthorSubmission.ArticleType.RESEARCH_ARTICLE,
+        )
+
+        cls.next_editor = mixer.blend(Editor)
+        cls.next_editor.journals.add(cls.journal)
+
+        cls.journal.assign_editor_role(cls.next_editor, EditorialMember.Role.SECTION)
+
+        cls.submission = JournalSubmission.objects.create(
+            stage="with line editor",
+            author_submission=author_submission,
+            journal=cls.journal,
+        )
+
+        cls.editor = Editor.objects.create(
+            affiliation="bayero university, kano",
+            phone_number="+2347037606119",
+            user=cls.user,
+        )
+
+        assign_handling_permissions(cls)
+
+    def test_transfer_submission(self):
+        next_handler = self.submission.editorial_members.get(
+            role=EditorialMember.Role.SECTION
+        )
+
+        current_handler = self.member
+
+        has_handling_perms = lambda m: self.submission.editorial_members.filter(
+            pk=m.pk,
+            permissions__code_name__in=handling_permissions,
+        ).exists()
+
+        data = {
+            "journalId": to_global_id(JournalNode, self.journal.pk),
+            "submissionId": to_global_id(SubmissionNode, self.submission.pk),
+            "editorialMemberId": to_global_id(EditorialMemberNode, next_handler.pk),
+            "clientMutationId": "d4f4f444",
+        }
+
+        response = self.query(
+            """
+            mutation TransferSubmissions($input: TransferHandlingPermissionInput!) {
+                transferSubmission(input: $input) {
+                    clientMutationId
+                    message
+                    submission {
+                        stage
+                        journal {
+                            name
+                        }
+                    }
+                }
+            }
+            """,
+            operation_name="TransferSubmissions",
+            variables={"input": data},
+            headers=self.headers,
+        )
+
+        self.assertResponseNoErrors(response)
+
+        content = json.loads(response.content)["data"]["transferSubmission"]
+
+        self.assertEqual(content["message"], "success")
+        self.assertTrue(has_handling_perms(next_handler))
+        self.assertFalse(has_handling_perms(current_handler))
+        self.assertEqual(
+            content["submission"]["stage"],
+            "with {}".format(next_handler.get_role_display()),
+        )
+
+
+class CreateEditorReport(GraphQLTestCase):
+    GRAPHQL_URL = "http://localhost/graphql"
+
+    @classmethod
+    def setUpTestData(cls):
+        dependencies(cls)
+        author_submission = mixer.blend(
+            AuthorSubmission,
+            user=cls.user,
+            article_type=AuthorSubmission.ArticleType.RESEARCH_ARTICLE,
+        )
+
+        cls.submission = JournalSubmission.objects.create(
+            stage="with line editor",
+            author_submission=author_submission,
+            journal=cls.journal,
+        )
+
+        cls.editor = Editor.objects.create(
+            affiliation="bayero university, kano",
+            phone_number="+2347037606119",
+            user=cls.user,
+        )
+
+        assign_handling_permissions(cls)
+
+    def test_create_editor_report(self):
+
+        data = {
+            "report": "the manuscript is good",
+            "journalId": to_global_id(JournalNode, self.journal.pk),
+            "submissionId": to_global_id(SubmissionNode, self.submission.pk),
+        }
+
+        response = self.query(
+            """
+            mutation CreateSubmissionReport($input: CreateEditorReportInput!) {
+                createEditorReport(input: $input) {
+                    message
+                    report {
+                        details
+                    }
+                    submission {
+                        stage
+                        journal {
+                            name
+                        }
+                    }
+                }
+            }
+            """,
+            operation_name="CreateSubmissionReport",
+            variables={"input": data},
+            headers=self.headers,
+        )
+
+        self.assertResponseNoErrors(response)
+
+        content = json.loads(response.content)["data"]["createEditorReport"]
+
+        self.assertEqual(content["report"]["details"], data["report"])
+
+
+class CreateReviewerReport(GraphQLTestCase):
+    GRAPHQL_URL = "http://localhost/graphql"
+
+    @classmethod
+    def setUpTestData(cls):
+        dependencies(cls)
+
+        author_submission = mixer.blend(
+            AuthorSubmission,
+            user=cls.user,
+            article_type=AuthorSubmission.ArticleType.RESEARCH_ARTICLE,
+        )
+
+        cls.submission = JournalSubmission.objects.create(
+            stage="with line editor",
+            author_submission=author_submission,
+            journal=cls.journal,
+        )
+
+    def test_create_reviewer_reporter(self):
+        reviewer = mixer.blend(Reviewer, user=self.user)
+        questions = mixer.cycle(3).blend(JournalReportQuestion, journal=self.journal)
+
+        self.submission.reviewers.add(reviewer)
+
+        data = {
+            "submissionId": to_global_id(JournalSubmissionNode, self.submission.pk),
+            "journalId": to_global_id(Journal, self.journal.pk),
+            "reportSections": [
+                {
+                    "response": "fffffefefe",
+                    "questionId": to_global_id(JournalReportQuestionNode, question.pk),
+                }
+                for question in questions
+            ],
+        }
+
+        response = self.query(
+            """
+            mutation CreateSubmissionReport($input: CreateReviewerReportInput!) {
+                createReviewerReport(input: $input) {
+                    message
+                    report {
+                        sections {
+                            edges {
+                                node {
+                                    response
+                                    section {
+                                        question
+                                        hint
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            """,
+            operation_name="CreateSubmissionReport",
+            variables={"input": data},
+            headers=self.headers,
+        )
+
+        self.assertResponseNoErrors(response)
+
+        content = json.loads(response.content)["data"]["createReviewerReport"]
+
+        self.assertEqual(content["message"], "success")
+        self.assertEqual(len(content["report"]["sections"]["edges"]), len(questions))
+        self.assertEqual(
+            content["report"]["sections"]["edges"][0]["node"]["section"]["question"],
+            questions[0].question,
+        )
 
 
 class QueryTest(GraphQLTestCase):
