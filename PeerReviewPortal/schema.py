@@ -22,7 +22,14 @@ from .mutations import (
 )
 from .nodes import JournalSubmissionNode, ReviewerReportNode
 from .models import JournalSubmission, ReviewerReport
-from .permissions import is_assigned_submission
+from .permissions import is_assigned_submission, is_reviewer_report
+
+
+related_fields = (
+    "author_submission__manuscript",
+    "author_submission__user",
+    "journal",
+)
 
 
 class Mutation(graphene.ObjectType):
@@ -72,11 +79,7 @@ class Query(graphene.ObjectType):
 
         return JournalSubmission.objects.filter(
             journal__pk=from_global_id(journal_id).id
-        ).select_related(
-            "author_submission__manuscript",
-            "author_submission__user",
-            "author_submission__manuscript__journal",
-        )
+        ).select_related(*related_fields)
 
     @is_editor_journal()
     @editor_is_required
@@ -84,7 +87,9 @@ class Query(graphene.ObjectType):
     def resolve_journal_submission(self, info, **kwargs):
         submission_id = kwargs.get("submission_id")
 
-        return JournalSubmission.objects.get(pk=from_global_id(submission_id).id)
+        return JournalSubmission.objects.select_related(*related_fields).get(
+            pk=from_global_id(submission_id).id
+        )
 
     @is_reviewer_journal()
     @login_required
@@ -94,7 +99,7 @@ class Query(graphene.ObjectType):
         return JournalSubmission.objects.filter(
             journal__pk=from_global_id(journal_id).id,
             reviewers__pk=info.context.user.reviewer.pk,
-        )
+        ).select_related(*related_fields)
 
     @is_reviewer_journal()
     @is_assigned_submission()
@@ -102,12 +107,14 @@ class Query(graphene.ObjectType):
     def resolve_review_submission(self, info, **kwargs):
         submission_id = kwargs.get("submission_id")
 
-        return JournalSubmission.objects.get(pk=from_global_id(submission_id).id)
+        return JournalSubmission.objects.select_related(*related_fields).get(
+            pk=from_global_id(submission_id).id
+        )
 
     @is_reviewer_journal()
-    @is_assigned_submission()
+    @is_reviewer_report()
     @login_required
-    def resolve_review_reporter(self, info, **kwargs):
+    def resolve_review_report(self, info, **kwargs):
         report_id = kwargs.get("report_id")
 
         return ReviewerReport.objects.get(pk=from_global_id(report_id).id)

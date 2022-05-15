@@ -80,8 +80,8 @@ class InviteReviewerMutation(graphene.relay.ClientIDMutation):
         journal_id = graphene.ID(required=True)
 
     @classmethod
-    @has_handling_permission(True)
-    @is_editor_journal(True)
+    @has_handling_permission()
+    @is_editor_journal()
     @editor_is_required
     @login_required
     def mutate(cls, root, info, input):
@@ -175,7 +175,7 @@ class AcceptSubmission(graphene.relay.ClientIDMutation):
         is_accepted = graphene.Boolean(required=True)
 
     @classmethod
-    @editor_in_chief_required(True)
+    @editor_in_chief_required()
     @editor_is_required
     @login_required
     def mutate(cls, root, info, input):
@@ -206,7 +206,7 @@ class AssignHandlingEditorsMutation(graphene.relay.ClientIDMutation):
         editors = graphene.List(EditorInput, required=True)
 
     @classmethod
-    @editor_in_chief_required(True)
+    @editor_in_chief_required()
     @editor_is_required
     @login_required
     def mutate(cls, root, info, input):
@@ -254,8 +254,8 @@ class TransferHandlingPermission(graphene.relay.ClientIDMutation):
         editorial_member_id = graphene.ID(required=True)
 
     @classmethod
-    @has_handling_permission(True)
-    @is_editor_journal(True)
+    @has_handling_permission()
+    @is_editor_journal()
     @editor_is_required
     @login_required
     def mutate(cls, root, info, input):
@@ -305,8 +305,8 @@ class CreateEditorReport(graphene.relay.ClientIDMutation):
         journal_id = graphene.ID(required=True)
 
     @classmethod
-    @has_handling_permission(True)
-    @is_editor_journal(True)
+    @has_handling_permission()
+    @is_editor_journal()
     @editor_is_required
     @login_required
     def mutate(cls, root, info, input):
@@ -342,7 +342,7 @@ class CreateReviewerReport(graphene.relay.ClientIDMutation):
         report_sections = graphene.List(ReportSectionInput, required=True)
 
     @classmethod
-    @is_assigned_submission(True)
+    @is_assigned_submission()
     @reviewer_is_required
     @login_required
     def mutate(cls, root, info, input):

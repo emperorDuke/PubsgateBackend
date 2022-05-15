@@ -10,15 +10,14 @@ editor_is_required = user_passes_test(
 )
 
 
-def is_editor_journal(calls_relay_mutation=False, input_key="journal_id"):
+def is_editor_journal(input_key="journal_id"):
     def decorator(f):
         @wraps(f)
         @context(f)
         def wrapper(context, *args, **kwargs):
 
-            if calls_relay_mutation:
-                input = kwargs.get("input")
-                journal_id = input.get(input_key, None)
+            if "input" in kwargs and len(args) == 3:
+                journal_id = kwargs["input"].get(input_key, None)
             else:
                 journal_id = kwargs.get(input_key, None)
 
@@ -30,7 +29,9 @@ def is_editor_journal(calls_relay_mutation=False, input_key="journal_id"):
             )
 
             if not editor.exists():
-                raise PermissionDenied("Forbiden action")
+                raise PermissionDenied(
+                    "You do not have permission to perform this action"
+                )
 
             return f(*args, **kwargs)
 
@@ -39,15 +40,14 @@ def is_editor_journal(calls_relay_mutation=False, input_key="journal_id"):
     return decorator
 
 
-def editor_in_chief_required(calls_relay_mutation=False, input_key="journal_id"):
+def editor_in_chief_required(input_key="journal_id"):
     def decorator(f):
         @wraps(f)
         @context(f)
         def wrapper(context, *args, **kwargs):
 
-            if calls_relay_mutation:
-                input = kwargs.get("input")
-                journal_id = input.get(input_key, None)
+            if "input" in kwargs and len(args) == 3:
+                journal_id = kwargs["input"].get(input_key, None)
             else:
                 journal_id = kwargs.get(input_key, None)
 
