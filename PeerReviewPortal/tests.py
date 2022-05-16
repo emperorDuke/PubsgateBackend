@@ -29,8 +29,16 @@ from Journals.nodes import (
     JournalReportQuestionNode,
 )
 
-from PeerReviewPortal.models import JournalSubmission
-from PeerReviewPortal.nodes import EditorialMemberNode, JournalSubmissionNode
+from PeerReviewPortal.models import (
+    JournalSubmission,
+    ReviewerReport,
+    ReviewerReportSection,
+)
+from PeerReviewPortal.nodes import (
+    EditorialMemberNode,
+    JournalSubmissionNode,
+    ReviewerReportNode,
+)
 from PeerReviewPortal.permissions import handling_permissions
 
 from SubmissionPortal.nodes import SubmissionNode
@@ -743,7 +751,7 @@ class CreateReviewerReport(GraphQLTestCase):
             "journalId": to_global_id(Journal, self.journal.pk),
             "reportSections": [
                 {
-                    "response": "fffffefefe",
+                    "response": "i feel the manuscript is a work in progress",
                     "questionId": to_global_id(JournalReportQuestionNode, question.pk),
                 }
                 for question in questions
@@ -968,12 +976,11 @@ class ReviewerQuery(GraphQLTestCase):
     def setUpTestData(cls):
         dependencies(cls)
 
-    def test_query_all_reviewer_submissions(self):
-        reviewer_1 = mixer.blend(Reviewer, user=self.user)
-        reviewer_2 = mixer.blend(Reviewer)
+        cls.reviewer_1 = mixer.blend(Reviewer, user=cls.user)
+        cls.reviewer_2 = mixer.blend(Reviewer)
 
-        reviewer_1.journals.add(self.journal)
-        reviewer_2.journals.add(self.journal)
+        cls.reviewer_1.journals.add(cls.journal)
+        cls.reviewer_2.journals.add(cls.journal)
 
         initial_submission = JournalSubmission.objects.create(
             stage="with line editor",
@@ -981,10 +988,10 @@ class ReviewerQuery(GraphQLTestCase):
                 AuthorSubmission,
                 article_type=AuthorSubmission.ArticleType.RESEARCH_ARTICLE,
             ),
-            journal=self.journal,
+            journal=cls.journal,
         )
 
-        submissions = JournalSubmission.objects.bulk_create(
+        cls.submissions = JournalSubmission.objects.bulk_create(
             [
                 JournalSubmission(
                     **{
@@ -993,18 +1000,19 @@ class ReviewerQuery(GraphQLTestCase):
                             AuthorSubmission,
                             article_type=AuthorSubmission.ArticleType.RESEARCH_ARTICLE,
                         ),
-                        "journal": self.journal,
+                        "journal": cls.journal,
                     }
                 )
-                for _ in range(len(self.users))
+                for _ in range(len(cls.users))
             ]
         )
 
-        initial_submission.reviewers.add(reviewer_2)
+        initial_submission.reviewers.add(cls.reviewer_2)
 
-        for submission in submissions:
-            submission.reviewers.add(reviewer_1)
+        for submission in cls.submissions:
+            submission.reviewers.add(cls.reviewer_1)
 
+    def test_query_all_reviewer_submissions(self):
         data = {"journalId": to_global_id(JournalNode, self.journal.pk)}
 
         response = self.query(
@@ -1035,49 +1043,13 @@ class ReviewerQuery(GraphQLTestCase):
         content = json.loads(response.content)["data"]["reviewerSubmissions"]
 
         self.assertIsNone(content["edges"][0]["node"]["isAccepted"])
-        self.assertEqual(len(content["edges"]), len(self.users))
+        self.assertEqual(len(content["edges"]), len(self.submissions))
         self.assertNotEqual(len(content["edges"]), JournalSubmission.objects.count())
 
     def test_query_reviewer_submission(self):
-        reviewer_1 = mixer.blend(Reviewer, user=self.user)
-        reviewer_2 = mixer.blend(Reviewer)
-
-        reviewer_1.journals.add(self.journal)
-        reviewer_2.journals.add(self.journal)
-
-        initial_submission = JournalSubmission.objects.create(
-            stage="with line editor",
-            author_submission=mixer.blend(
-                AuthorSubmission,
-                article_type=AuthorSubmission.ArticleType.RESEARCH_ARTICLE,
-            ),
-            journal=self.journal,
-        )
-
-        submissions = JournalSubmission.objects.bulk_create(
-            [
-                JournalSubmission(
-                    **{
-                        "stage": "with line editor",
-                        "author_submission": mixer.blend(
-                            AuthorSubmission,
-                            article_type=AuthorSubmission.ArticleType.RESEARCH_ARTICLE,
-                        ),
-                        "journal": self.journal,
-                    }
-                )
-                for _ in range(len(self.users))
-            ]
-        )
-
-        initial_submission.reviewers.add(reviewer_2)
-
-        for submission in submissions:
-            submission.reviewers.add(reviewer_1)
-
         data = {
             "journalId": to_global_id(JournalNode, self.journal.pk),
-            "submissionId": to_global_id(JournalSubmissionNode, submissions[0].pk),
+            "submissionId": to_global_id(JournalSubmissionNode, self.submissions[0].pk),
         }
 
         response = self.query(
@@ -1104,8 +1076,60 @@ class ReviewerQuery(GraphQLTestCase):
         content = json.loads(response.content)["data"]["reviewerSubmission"]
 
         self.assertIsNone(content["isAccepted"])
-        self.assertEqual(int(from_global_id(content["id"]).id), submissions[0].pk)
+        self.assertEqual(int(from_global_id(content["id"]).id), self.submissions[0].pk)
         self.assertEqual(
             int(from_global_id(content["authorSubmission"]["id"]).id),
-            submissions[0].author_submission.pk,
+            self.submissions[0].author_submission.pk,
+        )
+
+    def test_query_reviewer_report(self):
+        mixer.cycle(3).blend(ReviewerReport)
+        questions = mixer.cycle(3).blend(JournalReportQuestion, journal=self.journal)
+
+        report = mixer.blend(
+            ReviewerReport,
+            reviewer=self.reviewer_1,
+            journal_submission=mixer.blend(JournalSubmission, journal=self.journal),
+        )
+
+        report_sections = mixer.cycle(3).blend(
+            ReviewerReportSection, report=report, section=mixer.sequence(*questions)
+        )
+
+        data = {
+            "journalId": to_global_id(JournalNode, self.journal.pk),
+            "reportId": to_global_id(ReviewerReportNode, report.pk),
+        }
+
+        response = self.query(
+            """
+            query GetSubmissionReport($journalId: ID!, $reportId: ID!) {
+                reviewerReport(journalId: $journalId, reportId: $reportId) {
+                    id
+                    createdAt
+                    sections {
+                        edges {
+                            node {
+                                response
+                            }
+                        }
+                    }
+                }
+            }
+            """,
+            operation_name="GetSubmissionReport",
+            variables=data,
+            headers=self.headers,
+        )
+
+        self.assertResponseNoErrors(response)
+
+        content = json.loads(response.content)["data"]["reviewerReport"]
+
+        self.assertEqual((from_global_id(content["id"]).id), str(report.pk))
+        self.assertEqual(len(content["sections"]["edges"]), len(report_sections))
+        self.assertEqual(ReviewerReport.objects.count(), 4)
+        self.assertEqual(
+            content["sections"]["edges"][0]["node"]["response"],
+            report_sections[0].response,
         )

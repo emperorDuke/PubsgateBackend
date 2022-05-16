@@ -1,6 +1,6 @@
 import graphene
-from graphene_django import DjangoConnectionField
 
+from graphene_django import DjangoConnectionField
 from graphql_jwt.decorators import login_required
 from graphql_relay import from_global_id
 
@@ -76,7 +76,7 @@ class ReviewerQuery(graphene.ObjectType):
 
         return ReviewerReport.objects.get(
             pk=from_global_id(report_id).id,
-            journal_submission__journal__pk=journal_id,
+            journal_submission__journal__pk=from_global_id(journal_id).id,
             reviewer__user__pk=info.context.user.pk,
         )
 
