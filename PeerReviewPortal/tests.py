@@ -12,7 +12,7 @@ from django.utils import timezone
 from graphene.utils.str_converters import to_snake_case
 from graphene_django.utils.testing import GraphQLTestCase
 from graphql_jwt.shortcuts import get_token
-from graphql_relay import to_global_id
+from graphql_relay import from_global_id, to_global_id
 
 from Journals.models import (
     Journal,
@@ -788,7 +788,7 @@ class CreateReviewerReport(GraphQLTestCase):
         )
 
 
-class QueryTest(GraphQLTestCase):
+class EditorQueryTest(GraphQLTestCase):
     GRAPHQL_URL = "http://localhost/graphql"
 
     @classmethod
@@ -958,4 +958,154 @@ class QueryTest(GraphQLTestCase):
         self.assertEqual(
             content["authorSubmission"]["user"]["firstName"],
             self.users[0].first_name,
+        )
+
+
+class ReviewerQuery(GraphQLTestCase):
+    GRAPHQL_URL = "http://localhost/graphql"
+
+    @classmethod
+    def setUpTestData(cls):
+        dependencies(cls)
+
+    def test_query_all_reviewer_submissions(self):
+        reviewer_1 = mixer.blend(Reviewer, user=self.user)
+        reviewer_2 = mixer.blend(Reviewer)
+
+        reviewer_1.journals.add(self.journal)
+        reviewer_2.journals.add(self.journal)
+
+        initial_submission = JournalSubmission.objects.create(
+            stage="with line editor",
+            author_submission=mixer.blend(
+                AuthorSubmission,
+                article_type=AuthorSubmission.ArticleType.RESEARCH_ARTICLE,
+            ),
+            journal=self.journal,
+        )
+
+        submissions = JournalSubmission.objects.bulk_create(
+            [
+                JournalSubmission(
+                    **{
+                        "stage": "with line editor",
+                        "author_submission": mixer.blend(
+                            AuthorSubmission,
+                            article_type=AuthorSubmission.ArticleType.RESEARCH_ARTICLE,
+                        ),
+                        "journal": self.journal,
+                    }
+                )
+                for _ in range(len(self.users))
+            ]
+        )
+
+        initial_submission.reviewers.add(reviewer_2)
+
+        for submission in submissions:
+            submission.reviewers.add(reviewer_1)
+
+        data = {"journalId": to_global_id(JournalNode, self.journal.pk)}
+
+        response = self.query(
+            """
+            query GetReviewerSubmissions($journalId: ID!) {
+                reviewerSubmissions(journalId: $journalId) {
+                    edges {
+                        node {
+                            id
+                            isAccepted
+                            createdAt
+                            authorSubmission {
+                                id,
+                                articleType
+                            }
+                        }
+                    }
+                }
+            }
+            """,
+            operation_name="GetReviewerSubmissions",
+            variables=data,
+            headers=self.headers,
+        )
+
+        self.assertResponseNoErrors(response)
+
+        content = json.loads(response.content)["data"]["reviewerSubmissions"]
+
+        self.assertIsNone(content["edges"][0]["node"]["isAccepted"])
+        self.assertEqual(len(content["edges"]), len(self.users))
+        self.assertNotEqual(len(content["edges"]), JournalSubmission.objects.count())
+
+    def test_query_reviewer_submission(self):
+        reviewer_1 = mixer.blend(Reviewer, user=self.user)
+        reviewer_2 = mixer.blend(Reviewer)
+
+        reviewer_1.journals.add(self.journal)
+        reviewer_2.journals.add(self.journal)
+
+        initial_submission = JournalSubmission.objects.create(
+            stage="with line editor",
+            author_submission=mixer.blend(
+                AuthorSubmission,
+                article_type=AuthorSubmission.ArticleType.RESEARCH_ARTICLE,
+            ),
+            journal=self.journal,
+        )
+
+        submissions = JournalSubmission.objects.bulk_create(
+            [
+                JournalSubmission(
+                    **{
+                        "stage": "with line editor",
+                        "author_submission": mixer.blend(
+                            AuthorSubmission,
+                            article_type=AuthorSubmission.ArticleType.RESEARCH_ARTICLE,
+                        ),
+                        "journal": self.journal,
+                    }
+                )
+                for _ in range(len(self.users))
+            ]
+        )
+
+        initial_submission.reviewers.add(reviewer_2)
+
+        for submission in submissions:
+            submission.reviewers.add(reviewer_1)
+
+        data = {
+            "journalId": to_global_id(JournalNode, self.journal.pk),
+            "submissionId": to_global_id(JournalSubmissionNode, submissions[0].pk),
+        }
+
+        response = self.query(
+            """
+            query GetSubmission($journalId: ID!, $submissionId: ID!) {
+                reviewerSubmission(journalId: $journalId, submissionId: $submissionId) {
+                    id
+                    isAccepted
+                    createdAt
+                    authorSubmission {
+                        id
+                        articleType
+                    }
+                }
+            }
+            """,
+            operation_name="GetSubmission",
+            variables=data,
+            headers=self.headers,
+        )
+
+        self.assertResponseNoErrors(response)
+
+        content = json.loads(response.content)["data"]["reviewerSubmission"]
+
+        self.assertIsNone(content["isAccepted"])
+        self.assertEqual(int(from_global_id(content["id"]).id), submissions[0].pk)
+        self.assertEqual(
+            int(from_global_id(content["authorSubmission"]["id"]).id),
+            submissions[0].author_submission.pk,
         )
