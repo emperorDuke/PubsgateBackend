@@ -26,7 +26,7 @@ class JournalNode(DjangoObjectType):
 class JournalDetailNode(DjangoObjectType):
     class Meta:
         model = JournalDetail
-        fields = ("id", "content", "detail_type", "created_at", "file", "journal")
+        fields = ("id", "content", "detail_type", "created_at", "journal")
 
 
 class JournalSubjectAreaNode(DjangoObjectType):
