@@ -64,7 +64,7 @@ class EditorReport(models.Model):
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    details = models.TextField(_("report_details"))
+    detail = models.TextField(_("report_detail"))
     editor = models.ForeignKey(Editor, related_name="reports", on_delete=models.CASCADE)
     journal_submission = models.ForeignKey(
         JournalSubmission, related_name="editors_reports", on_delete=models.CASCADE
@@ -75,7 +75,7 @@ class EditorReport(models.Model):
         db_table = "journal_submission_editor_reports"
         constraints = [
             models.UniqueConstraint(
-                fields=["details", "editor", "journal_submission"],
+                fields=["detail", "editor", "journal_submission"],
                 name="unique_editor_report",
             )
         ]

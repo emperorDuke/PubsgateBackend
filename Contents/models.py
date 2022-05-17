@@ -52,7 +52,7 @@ class ManuscriptSection(models.Model):
         Manuscript, related_name="sections", on_delete=models.CASCADE
     )
     section = models.ForeignKey(ArticleTypeSection, on_delete=models.CASCADE)
-    content = models.TextField(_("content"), blank=True, null=True)
+    content = models.JSONField(_("content"))
     created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
 
     class Meta:
@@ -70,45 +70,6 @@ class ManuscriptSection(models.Model):
         return self.section.name
 
 
-class ManuscriptSubSection(models.Model):
-    """
-    Manuscript section sub sections
-    """
-
-    class Level(models.IntegerChoices):
-        LEVEL_1 = 1, _("Level 1")
-        LEVEL_2 = 2, _("Level 2")
-        LEVEL_3 = 3, _("Level 3")
-        LEVEL_4 = 4, _("Level 4")
-        LEVEL_5 = 5, _("Level 5")
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    manuscript_section = models.ForeignKey(
-        ManuscriptSection, related_name="sub_sections", on_delete=models.CASCADE
-    )
-    level = models.IntegerField(
-        _("level"), default=Level.LEVEL_1, choices=Level.choices
-    )
-    heading = models.CharField(_("heading"), max_length=255)
-    body = models.TextField(_("body"))
-    parent_id = models.UUIDField(_("parent_id"), blank=True, null=True)
-    created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
-
-    class Meta:
-        verbose_name = _("manuscript_sub_section")
-        verbose_name_plural = _("manuscript_sub_sections")
-        ordering = ("created_at",)
-        db_table = "manuscript_sub_sections"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["manuscript_section", "heading"], name="unique_heading"
-            )
-        ]
-
-    def __str__(self):
-        return self.heading
-
-
 class ManuscriptFile(models.Model):
     """
     File associated with the manuscript
@@ -119,10 +80,9 @@ class ManuscriptFile(models.Model):
         return "%s/manuscripts/%s/%s" % (journal_name, instance.manuscript.id, filename)
 
     class FileType(models.IntegerChoices):
-        TABLE = 1, _("Table")
-        FIGURE = 2, _("Figure")
+        TABLE = 1, _("table")
+        FIGURE = 2, _("figure")
 
-    created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
     version = models.PositiveIntegerField(_("version"), blank=True, default=1)
     label_no = models.PositiveIntegerField(_("label_number"))
     label_on_manuscript = models.CharField(_("label_on_manuscript"), max_length=255)
@@ -138,6 +98,7 @@ class ManuscriptFile(models.Model):
     manuscript = models.ForeignKey(
         Manuscript, related_name="files", on_delete=models.CASCADE
     )
+    created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
 
     class Meta:
         verbose_name = _("manuscript_file")

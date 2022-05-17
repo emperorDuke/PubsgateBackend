@@ -54,7 +54,7 @@ class EditorialMemberNode(DjangoObjectType):
 class EditorReportNode(DjangoObjectType):
     class Meta:
         model = EditorReport
-        fields = ["id", "details", "created_at", "editor"]
+        fields = ["id", "detail", "created_at", "editor"]
         interfaces = (graphene.relay.Node,)
 
 

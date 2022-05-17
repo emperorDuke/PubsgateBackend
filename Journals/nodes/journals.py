@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 
 from Cores.nodes import SubjectDisciplineNode
 from ..models.journals import (
+    JournalDetail,
     JournalPermission,
     JournalReportQuestion,
     JournalSubjectArea,
@@ -20,6 +21,12 @@ class JournalNode(DjangoObjectType):
 
     def resolve_discipline(self, info):
         return self.subject_discipline
+
+
+class JournalDetailNode(DjangoObjectType):
+    class Meta:
+        model = JournalDetail
+        fields = ("id", "content", "detail_type", "created_at", "file", "journal")
 
 
 class JournalSubjectAreaNode(DjangoObjectType):

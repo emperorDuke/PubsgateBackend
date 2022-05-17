@@ -156,11 +156,9 @@ class JournalDetail(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     file = models.FileField(_("file"), upload_to=upload_to)
-    detail = models.TextField(_("datail"), blank=True, null=True)
+    content = models.TextField(_("content"), blank=True, null=True)
     created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
-
     detail_type = models.ForeignKey(JournalDetailType, on_delete=models.CASCADE)
-
     journal = models.ForeignKey(
         Journal, related_name="details", on_delete=models.CASCADE
     )

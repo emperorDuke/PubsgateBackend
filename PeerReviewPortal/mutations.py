@@ -1,3 +1,4 @@
+import json
 import graphene
 
 from django.utils import timezone
@@ -107,7 +108,7 @@ class InviteReviewerMutation(graphene.relay.ClientIDMutation):
             section__name="abstract",
         )
 
-        abstract = abstract_section.content
+        abstract = json.loads(abstract_section.content)[0]["children"][0]["text"]
         url = "/peer-review/invite?JSID={0}".format(signed_JSID)
 
         from_email = "{0}@pubsgate.com".format(journal.name)
@@ -317,7 +318,7 @@ class CreateEditorReport(graphene.relay.ClientIDMutation):
         submission = JournalSubmission.objects.get(pk=from_global_id(submission_id).id)
 
         report_obj = EditorReport.objects.create(
-            details=report, editor=editor, journal_submission=submission
+            detail=report, editor=editor, journal_submission=submission
         )
 
         message = "success" if report_obj else "failed"

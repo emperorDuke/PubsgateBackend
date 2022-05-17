@@ -1,3 +1,4 @@
+import json
 import graphene
 
 from graphql import GraphQLError
@@ -72,7 +73,14 @@ class CreateSubmissionMutation(graphene.relay.ClientIDMutation):
             [
                 ManuscriptSection(
                     section=get_article_section(section.get("section_id")),
-                    content=section.get("content"),
+                    content=json.dumps(
+                        [
+                            {
+                                "type": "paragraph",
+                                "children": [{"text": section.get("content")}],
+                            }
+                        ]
+                    ),
                     manuscript=manuscript,
                 )
                 for section in sections
@@ -252,11 +260,22 @@ class UpdateAuthorSubmissionMutation(graphene.relay.ClientIDMutation):
                 pk=from_global_id(id).id
             )
 
+            section = json.dumps(
+                {"type": "paragraph", "children": [{"text": section.get("content")}]}
+            )
+
             ManuscriptSection.objects.bulk_create(
                 [
                     ManuscriptSection(
                         section=get_article_section(section.get("section_id")),
-                        content=section.get("content"),
+                        content=json.dumps(
+                            [
+                                {
+                                    "type": "paragraph",
+                                    "children": [{"text": section.get("content")}],
+                                }
+                            ]
+                        ),
                         manuscript=manuscript,
                     )
                     for section in sections

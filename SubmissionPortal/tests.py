@@ -341,6 +341,7 @@ class SubmissionsTests(GraphQLFileUploadTestMixin, GraphQLTestCase):
             ManuscriptSection,
             manuscript=manuscript,
             section=mixer.sequence(*self.sections_qs),
+            content=json.dumps([{"type": "paragraph"}]),
         )
 
         submission = mixer.blend(
@@ -680,6 +681,7 @@ class SubmissionsTests(GraphQLFileUploadTestMixin, GraphQLTestCase):
             ManuscriptSection,
             manuscript=mixer.sequence(*manuscripts),
             section=mixer.sequence(*self.sections_qs),
+            content=json.dumps([{"type": "paragraph"}]),
         )
 
         submissions = mixer.cycle(3).blend(
@@ -734,6 +736,7 @@ class SubmissionsTests(GraphQLFileUploadTestMixin, GraphQLTestCase):
             ManuscriptSection,
             manuscript=manuscript,
             section=mixer.sequence(*self.sections_qs),
+            content=json.dumps([{"type": "paragraph"}]),
         )
 
         submission = mixer.blend(

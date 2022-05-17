@@ -394,6 +394,26 @@ class InviteReviewerMutationTest(GraphQLTestCase):
             ManuscriptSection,
             manuscript=manuscript,
             section=mixer.sequence(*cls.sections_qs),
+            content=json.dumps(
+                [
+                    {
+                        "type": "paragraph",
+                        "children": [
+                            {
+                                "text": (
+                                    "Upon discovery that the Boquila trifoliolata is capable of flexible leaf mimicry, the question of the"
+                                    "mechanism behind this ability has been unanswered. Here, we demonstrate that plant vision possibly"
+                                    "via plant-specific ocelli is a plausible hypothesis. A simple experiment by placing an artificial vine model"
+                                    "above the living plants has shown that these will attempt to mimic the artificial leaves. The experiment"
+                                    "has been carried out with multiple plants, and each plant has shown attempts at mimicry. It was observed"
+                                    "that mimic leaves showed altered leaf areas, perimeters, lengths, and widths compared to non-mimic"
+                                    "leaves. We have calculated four morphometrical features and observed that mimic leaves showed higher"
+                                )
+                            }
+                        ],
+                    }
+                ]
+            ),
         )
 
         author_submission = mixer.blend(
@@ -698,7 +718,7 @@ class CreateEditorReport(GraphQLTestCase):
                 createEditorReport(input: $input) {
                     message
                     report {
-                        details
+                        detail
                     }
                     submission {
                         stage
@@ -718,7 +738,7 @@ class CreateEditorReport(GraphQLTestCase):
 
         content = json.loads(response.content)["data"]["createEditorReport"]
 
-        self.assertEqual(content["report"]["details"], data["report"])
+        self.assertEqual(content["report"]["detail"], data["report"])
 
 
 class CreateReviewerReport(GraphQLTestCase):
