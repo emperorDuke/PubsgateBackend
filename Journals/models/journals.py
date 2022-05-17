@@ -151,12 +151,8 @@ class JournalDetail(models.Model):
     The details of the journal like aim and scope, Author guidelines etc.
     """
 
-    def upload_to(instance, filename):
-        return "%s/details/%s" % (instance.journal.name, filename)
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    file = models.FileField(_("file"), upload_to=upload_to)
-    content = models.TextField(_("content"), blank=True, null=True)
+    content = models.JSONField(_("content"))
     created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
     detail_type = models.ForeignKey(JournalDetailType, on_delete=models.CASCADE)
     journal = models.ForeignKey(
@@ -194,11 +190,10 @@ class JournalViewLog(models.Model):
 
 class JournalVolume(models.Model):
     name = models.CharField(_("name"), max_length=200)
-    added_at = models.DateTimeField(_("added_at"), auto_now_add=True)
-
     journal = models.ForeignKey(
         Journal, related_name="volumes", on_delete=models.CASCADE
     )
+    added_at = models.DateTimeField(_("added_at"), auto_now_add=True)
 
     class Meta:
         db_table = "journal_volumes"
