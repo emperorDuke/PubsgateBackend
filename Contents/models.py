@@ -105,6 +105,12 @@ class ManuscriptFile(models.Model):
         verbose_name_plural = _("manuscript_files")
         ordering = ["file_type", "label_no"]
         db_table = "manuscript_files"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["file_type", "label_no", "manuscript"],
+                name="unique_manuscript_file",
+            )
+        ]
 
     def __str__(self) -> str:
         return self.label_on_manuscript

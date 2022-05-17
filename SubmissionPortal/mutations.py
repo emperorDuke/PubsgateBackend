@@ -15,8 +15,7 @@ from Contents.models import (
 from Cores.models import ArticleTypeSection, TermOfService
 from Journals.models import Journal, JournalSubjectArea
 
-from SubmissionPortal.nodes import SubmissionNode
-
+from .nodes import SubmissionNode
 from .input_types import (
     AuthorInputType,
     ManuscriptSectionInput,
@@ -258,10 +257,6 @@ class UpdateAuthorSubmissionMutation(graphene.relay.ClientIDMutation):
 
             get_article_section = lambda id: ArticleTypeSection.objects.get(
                 pk=from_global_id(id).id
-            )
-
-            section = json.dumps(
-                {"type": "paragraph", "children": [{"text": section.get("content")}]}
             )
 
             ManuscriptSection.objects.bulk_create(
