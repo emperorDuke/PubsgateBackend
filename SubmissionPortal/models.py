@@ -67,9 +67,9 @@ class SubmissionFile(models.Model):
         )
 
     class FileType(models.IntegerChoices):
-        COVER_LETTER = 1, _("Cover letter")
-        MANUSCRIPT = 2, _("Manuscript")
-        SUPPLEMENTARY_DATA = 3, _("Supplementary data")
+        COVER_LETTER = 1, _("cover letter")
+        MANUSCRIPT = 2, _("manuscript")
+        SUPPLEMENTARY_DATA = 3, _("supplementary data")
 
     author_submission = models.ForeignKey(
         AuthorSubmission, related_name="files", on_delete=models.CASCADE
@@ -92,8 +92,8 @@ class SubmissionFile(models.Model):
 # users agreement before manuscript submission
 class SubmissionConditionAgreement(models.Model):
     class ResponseType(models.IntegerChoices):
-        YES = 1, _("YES")
-        NO = 2, _("NO")
+        YES = 1, _("yes")
+        NO = 2, _("no")
 
     statement = models.TextField(_("statement"), blank=True, null=True)
     documented_at = models.DateTimeField(_("documented_at"), auto_now_add=True)

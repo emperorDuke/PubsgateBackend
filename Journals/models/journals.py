@@ -1,5 +1,5 @@
-import re
 import uuid
+
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -16,6 +16,7 @@ class Journal(models.Model):
 
     name = models.CharField(_("journal name"), max_length=255, blank=False, unique=True)
     is_open_access = models.BooleanField(_("is_open_access"), default=False)
+    issn = models.CharField(_("issn"), max_length=255, blank=False)
     subject_dicipline = models.ForeignKey(
         SubjectDiscipline, related_name="journals", on_delete=models.PROTECT
     )
@@ -110,34 +111,22 @@ class JournalBanner(models.Model):
     def upload_to(instance, filename):
         return "%s/banners/%s" % (instance.journal.name, filename)
 
-    class PageSection(models.TextChoices):
-        MAIN = (
-            "main",
-            _("main"),
-        )
-        MID = (
-            "middle",
-            _("middle"),
-        )
-        BOT = (
-            "bottom",
-            _("bottom"),
-        )
+    class PageSection(models.IntegerChoices):
+        MAIN = 1, _("main")
+        MIDDLE = 2, _("middle")
+        BOTTOM = 3, _("bottom")
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     file = models.ImageField(_("file"), upload_to=upload_to)
-    created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
-
     journal = models.ForeignKey(
         Journal, related_name="banners", on_delete=models.CASCADE
     )
-
-    section = models.CharField(
+    section = models.IntegerField(
         _("section"),
-        max_length=70,
         choices=PageSection.choices,
         default=PageSection.MAIN,
     )
+    created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
 
     class Meta:
         db_table = "journal_banners"
@@ -153,11 +142,11 @@ class JournalDetail(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     content = models.JSONField(_("content"))
-    created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
     detail_type = models.ForeignKey(JournalDetailType, on_delete=models.CASCADE)
     journal = models.ForeignKey(
         Journal, related_name="details", on_delete=models.CASCADE
     )
+    created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
 
     class Meta:
         db_table = "journal_details"
@@ -165,12 +154,13 @@ class JournalDetail(models.Model):
         verbose_name_plural = _("journal details")
         ordering = ["created_at"]
 
+    def __str__(self) -> str:
+        return self.detail_type.name
+
 
 class JournalViewLog(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     ip_address = models.GenericIPAddressField(_("ip_address"))
-    created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
-
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -180,6 +170,7 @@ class JournalViewLog(models.Model):
     journal = models.ForeignKey(
         Journal, related_name="view_logs", on_delete=models.CASCADE
     )
+    created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
 
     class Meta:
         db_table = "journal_view_logs"

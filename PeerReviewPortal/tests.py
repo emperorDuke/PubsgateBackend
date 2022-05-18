@@ -220,6 +220,7 @@ class AssignHandlingEditorsTest(GraphQLTestCase):
             ),
             journal=self.journal,
         )
+
         editor = Editor.objects.create(
             **{
                 "affiliation": "bayero university, kano",
