@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.template.defaultfilters import slugify
 from django.utils.translation import gettext_lazy as _
 
 from Cores.models import JournalDetailType, SubjectDiscipline
@@ -14,9 +15,14 @@ class Journal(models.Model):
     Journals pathnering with publisher
     """
 
-    name = models.CharField(_("journal name"), max_length=255, blank=False, unique=True)
+    def upload_to(instance, filename):
+        return "%s/logo/%s" % (instance.name, filename)
+
+    name = models.CharField(_("name"), max_length=255, unique=True)
+    slug = models.SlugField(_("slug"), max_length=255, unique=True)
     is_open_access = models.BooleanField(_("is_open_access"), default=False)
     issn = models.CharField(_("issn"), max_length=255, blank=False)
+    logo = models.ImageField(_("logo"), upload_to=upload_to)
     subject_dicipline = models.ForeignKey(
         SubjectDiscipline, related_name="journals", on_delete=models.PROTECT
     )
@@ -30,6 +36,12 @@ class Journal(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.slug = slugify(self.name)
+
+        super(Journal, self).save(*args, **kwargs)
 
     def add_editorial_member(self, editor, role):
         """
