@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.template.defaultfilters import slugify
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
 from Cores.models import JournalDetailType, SubjectDiscipline
 
@@ -18,10 +19,33 @@ class Journal(models.Model):
     def upload_to(instance, filename):
         return "%s/logo/%s" % (instance.name, filename)
 
+    class FrequencyType(models.IntegerChoices):
+        ANNAUL = 1, _("annual")
+        BIANNUAL = 2, _("bi-annual")
+
+    class ModelType(models.IntegerChoices):
+        GOLD_ACCESS = 1, _("open-access")
+        HYBRID = 2, _("hybrid")
+
     name = models.CharField(_("name"), max_length=255, unique=True)
     slug = models.SlugField(_("slug"), max_length=255, unique=True)
-    is_open_access = models.BooleanField(_("is_open_access"), default=False)
-    issn = models.CharField(_("issn"), max_length=255, blank=False)
+    access_options = models.IntegerField(
+        _("access_model"), default=ModelType.GOLD_ACCESS, choices=ModelType.choices
+    )
+    issn = models.CharField(_("ISSN"), max_length=255, blank=False)
+    publication_start_year = models.CharField(
+        _("publication_start_year"),
+        max_length=255,
+        default=str(timezone.now().today().year),
+    )
+    publication_frequency = models.IntegerField(
+        _("publication_frequency"),
+        choices=FrequencyType.choices,
+        default=FrequencyType.BIANNUAL,
+    )
+    iso_abbreviation = models.CharField(
+        _("ISO_abbreviation"), max_length=255, null=True, default=None
+    )
     logo = models.ImageField(_("logo"), upload_to=upload_to)
     subject_dicipline = models.ForeignKey(
         SubjectDiscipline, related_name="journals", on_delete=models.PROTECT
