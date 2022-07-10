@@ -6,7 +6,7 @@ from graphql_jwt.shortcuts import get_token
 from graphql_relay import to_global_id
 from graphene.utils.str_converters import to_snake_case
 
-from Users.nodes import UserNode
+from Users.nodes import User as UserNode
 
 
 class UsersTests(GraphQLTestCase):
@@ -24,11 +24,31 @@ class UsersTests(GraphQLTestCase):
             "state": "lagos",
         }
 
+    def test_login_user(self):
+        user = get_user_model().objects.create_superuser(
+            **{to_snake_case(k): v for k, v in self.userInfo.items()}
+        )
+
+        response = self.query(
+            """
+            mutation LoginUser($email: String!, $password: String!) {
+                tokenAuth(email: $email, password: $password) {
+                    token
+                    refreshToken
+                }
+            }
+            """,
+            operation_name="LoginUser",
+            variables={"email": user.email, "password": self.userInfo["password"]},
+        )
+
+        self.assertResponseNoErrors(response)
+
     def test_create_user(self):
         response = self.query(
             """
-            mutation CreateAuthorAndLogin($input: UserCreateMutationInput!) {
-                createUser(input: $input) {
+            mutation CreateAuthorAndLogin($firstName: String!, $lastName: String!, $email: String!, $password: String!, $country: String!, $state: String!) {
+                createUser(firstName: $firstName, lastName: $lastName, email: $email, password: $password, country: $country, state: $state) {
                     user {
                         firstName
                         lastName
@@ -42,7 +62,7 @@ class UsersTests(GraphQLTestCase):
             }
             """,
             operation_name="CreateAuthorAndLogin",
-            variables={"input": self.userInfo},
+            variables=self.userInfo,
         )
 
         self.assertResponseNoErrors(response)

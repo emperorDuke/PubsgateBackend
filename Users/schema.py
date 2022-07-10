@@ -6,7 +6,7 @@ from graphql_jwt.decorators import login_required, staff_member_required
 from graphql_relay import from_global_id
 
 from .mutations import UserCreateMutation, UserUpdateMutation
-from .nodes import UserNode
+from .nodes import User as UserNode
 
 
 class Mutation(graphene.ObjectType):

@@ -6,15 +6,15 @@ from graphql_jwt.shortcuts import create_refresh_token, get_token
 
 from Users.models import User
 
-from .nodes import UserNode
+from .nodes import User as UserNode
 
 
-class UserCreateMutation(graphene.relay.ClientIDMutation):
+class UserCreateMutation(graphene.Mutation):
     user = graphene.Field(UserNode)
     access_token = graphene.String()
     refresh_token = graphene.String()
 
-    class Input:
+    class Arguments:
         first_name = graphene.String(required=True)
         last_name = graphene.String(required=True)
         email = graphene.String(required=True)
@@ -23,23 +23,19 @@ class UserCreateMutation(graphene.relay.ClientIDMutation):
         state = graphene.String(required=True)
 
     @classmethod
-    def mutate(cls, root, info: dict, input: dict):
-        email = input.pop('email')
-        password = input.pop('password')
+    def mutate(cls, root, info, **kwargs):
+        email = kwargs.pop("email")
+        password = kwargs.pop("password")
 
         user: User = get_user_model().objects.create_user(
-            email=email,
-            password=password,
-            **input
+            email=email, password=password, **kwargs
         )
 
         token = get_token(user)
         refresh_token = create_refresh_token(user)
 
         return UserCreateMutation(
-            user=user,
-            access_token=token,
-            refresh_token=refresh_token
+            user=user, access_token=token, refresh_token=refresh_token
         )
 
 
@@ -61,7 +57,7 @@ class UserUpdateMutation(graphene.relay.ClientIDMutation):
         user: User = info.context.user
 
         for k, v in input.items():
-            if (k == 'password') and (v is not None):
+            if (k == "password") and (v is not None):
                 user.set_password(input.password)
             else:
                 setattr(user, k, v)

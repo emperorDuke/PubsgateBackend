@@ -10,6 +10,7 @@ click-plugins==1.1.1
 click-repl==0.2.0
 colorama==0.4.4
 Django==4.0.3
+django-cors-headers==3.13.0
 django-filter==21.1
 django-graphql-jwt==0.3.4
 docx2pdf==0.1.8

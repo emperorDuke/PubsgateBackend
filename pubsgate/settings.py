@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "graphene_django",
     "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
     "django_filters",
+    "corsheaders",
     "Users",
     "Journals",
     "Contents",
@@ -52,6 +53,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -175,6 +177,20 @@ GRAPHENE = {
 AUTHENTICATION_BACKENDS = [
     "graphql_jwt.backends.JSONWebTokenBackend",
     "django.contrib.auth.backends.ModelBackend",
+]
+
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
+
+CORS_ALLOW_METHODS = ["POST", "GET", "DELETE", "PUT", "OPTIONS", "PATCH"]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "accept-encoding",
+    "origin",
+    "x-csrftoken",
+    "user-agent",
 ]
 
 GRAPHQL_JWT = {
