@@ -29,4 +29,4 @@ class Editor(models.Model):
         db_table = "editors"
 
     def __str__(self) -> str:
-        return "%s, %s" % (self.user.first_name, self.position)
+        return "%s, %s" % (self.user.first_name, self.affiliation)

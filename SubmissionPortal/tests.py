@@ -56,7 +56,7 @@ class SubmissionsTests(GraphQLFileUploadTestMixin, GraphQLTestCase):
         )
 
         dicipline = SubjectDiscipline.objects.create(name="life sciences")
-        journal = Journal.objects.create(name="biolife", subject_dicipline=dicipline)
+        journal = Journal.objects.create(name="biolife", subject_discipline=dicipline)
         subject = JournalSubjectArea.objects.create(
             name="microbiology", journal=journal
         )

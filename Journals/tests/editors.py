@@ -22,7 +22,7 @@ class EditorTestcase(GraphQLTestCase):
         cls.auth_token: str = get_token(cls.user)
         cls.headers = {"HTTP_AUTHORIZATION": f"Bearer {cls.auth_token}"}
         cls.journal = mixer.blend(
-            Journal, subject_dicipline=mixer.blend(SubjectDiscipline)
+            Journal, subject_discipline=mixer.blend(SubjectDiscipline)
         )
 
         models.Group.objects.create(name="editors")

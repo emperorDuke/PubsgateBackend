@@ -2,7 +2,7 @@ import graphene
 
 from graphene_django import DjangoObjectType
 
-from Cores.nodes import SubjectDisciplineNode
+from Cores.nodes import SubjectDiscipline as SubjectDisciplineNode
 from ..models.journals import (
     JournalDetail,
     JournalPermission,

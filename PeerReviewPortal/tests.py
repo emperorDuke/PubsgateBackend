@@ -143,7 +143,7 @@ def dependencies(cls):
     )
 
     dicipline = SubjectDiscipline.objects.create(name="life sciences")
-    journal = Journal.objects.create(name="biolife", subject_dicipline=dicipline)
+    journal = Journal.objects.create(name="biolife", subject_discipline=dicipline)
 
     journal.editors.set(cls.editors)
     journal.reviewers.set(cls.reviewers)
@@ -181,7 +181,6 @@ def dependencies(cls):
 def assign_handling_permissions(cls):
     ## assign editor to the journal ##
     cls.editor.journals.add(cls.journal)
-    cls.journal.add_editorial_member(cls.editor, EditorialMember.Role.LINE)
 
     ## journal specific permissions
     permissions_qs = JournalPermission.objects.filter(
@@ -440,7 +439,6 @@ class InviteReviewerMutationTest(GraphQLTestCase):
 
         ## assign editor to the journal ##
         self.editor.journals.add(self.journal)
-        self.journal.add_editorial_member(self.editor, EditorialMember.Role.LINE)
 
         ## journal specific permissions
         permissions_qs = JournalPermission.objects.filter(

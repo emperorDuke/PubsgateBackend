@@ -5,6 +5,7 @@ import SubmissionPortal.schema as SubmissionPortalSchema
 import Users.schema as UserSchema
 import PeerReviewPortal.schema as PeerReviewSchema
 import Journals.schema as EditorsSchema
+import Cores.schema as CoreSchema
 
 
 class Mutation(
@@ -21,6 +22,7 @@ class Mutation(
 
 
 class Query(
+    CoreSchema.Query,
     EditorsSchema.Query,
     PeerReviewSchema.Query,
     SubmissionPortalSchema.Query,

@@ -46,6 +46,7 @@ class EditorialMember(Role):
         blank=True,
         null=True,
     )
+    access_login = models.CharField(_("access_login"), max_length=255)
     permissions = models.ManyToManyField(
         JournalPermission, related_name="journal_roles"
     )

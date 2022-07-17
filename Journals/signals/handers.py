@@ -1,6 +1,10 @@
+import random
+import string
+
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.contrib.auth.models import Group
+from django.contrib.auth.hashers import make_password
 
 from ..models import Journal, JournalPermission, Reviewer, Editor, EditorialMember
 from ..permissions import JournalPermissionChoice
@@ -46,6 +50,11 @@ def create_editorial_board_roles(sender, instance, created, *args, **kwargs):
                     **{
                         "role": getattr(EditorialMember.Role, role),
                         "journal": instance,
+                        "access_login": make_password(
+                            "".join(
+                                random.choice(string.ascii_letters) for i in range(6)
+                            )
+                        ),
                     }
                 )
                 for role in filter(

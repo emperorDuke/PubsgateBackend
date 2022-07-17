@@ -1,10 +1,13 @@
+import string
 import uuid
+import random
 
 from django.conf import settings
 from django.db import models
 from django.template.defaultfilters import slugify
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.contrib.auth.hashers import make_password
 
 from Cores.models import JournalDetailType, SubjectDiscipline
 
@@ -46,8 +49,8 @@ class Journal(models.Model):
     iso_abbreviation = models.CharField(
         _("ISO_abbreviation"), max_length=255, null=True, default=None
     )
-    logo = models.ImageField(_("logo"), upload_to=upload_to)
-    subject_dicipline = models.ForeignKey(
+    logo = models.ImageField(_("logo"), upload_to=upload_to, null=True, blank=True)
+    subject_discipline = models.ForeignKey(
         SubjectDiscipline, related_name="journals", on_delete=models.PROTECT
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -71,7 +74,14 @@ class Journal(models.Model):
         """
         Create the editorial member role and assign editor to it
         """
-        member = self.editorial_members.create(role=role, editor=editor, journal=self)
+        member = self.editorial_members.create(
+            role=role,
+            editor=editor,
+            journal=self,
+            access_login=make_password(
+                "".join(random.choice(string.ascii_letters) for i in range(6))
+            ),
+        )
 
         permission_qs = self.permissions.all()
         member.permissions.add(*permission_qs)

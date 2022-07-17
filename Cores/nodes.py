@@ -4,10 +4,13 @@ from graphene_django import DjangoObjectType
 from .models import ArticleTypeSection, SubjectDiscipline, TermOfService, ArticleType
 
 
-class SubjectDisciplineNode(DjangoObjectType):
+class SubjectDiscipline(DjangoObjectType):
     class Meta:
         model = SubjectDiscipline
-        fields = ("name",)
+        fields = (
+            "id",
+            "name",
+        )
         interfaces = (graphene.relay.Node,)
 
 
