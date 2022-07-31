@@ -15,9 +15,9 @@ class Editor(models.Model):
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    affiliation = models.CharField(_("affiliation"), max_length=300)
-    phone_number = models.CharField(_("phone number"), max_length=255)
-    specialisation = models.CharField(_("specialisation"), max_length=255)
+    affiliation = models.CharField(_("affiliation"), max_length=300, blank=True, null=True)
+    phone_number = models.CharField(_("phone number"), max_length=255, blank=True, null=True)
+    specialisation = models.CharField(_("specialisation"), max_length=255, blank=True, null=True)
     journals = models.ManyToManyField(Journal, related_name="editors")
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     started_at = models.DateTimeField(_("started at"), auto_now_add=True)

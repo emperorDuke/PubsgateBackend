@@ -9,3 +9,4 @@ class JournalPermissionChoice(models.TextChoices):
     ASSIGN_REVIEWERS = "assign_reviewers", _("Can assign reviewers")
     DELETE_SUBMISSIONS = "delete_submissions", _("Can delete submissions")
     EDIT_SUBMISSIONS = "edit_submissions", _("Can edit submissions")
+    CAN_RECRUIT = "can_recruit", _("Can recriut editors or reviewers")

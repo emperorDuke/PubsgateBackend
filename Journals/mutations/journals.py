@@ -1,13 +1,11 @@
 import graphene
 
-from django.contrib.auth import get_user_model
-
+from graphql import GraphQLError
 from graphql_jwt.decorators import login_required, staff_member_required
-from graphql_relay import from_global_id
 
 from Cores.models import SubjectDiscipline
 
-from Journals.models import Journal
+from Journals.models import Journal, Editor
 from Journals.models.roles import EditorialMember
 from Journals.nodes import JournalNode
 
@@ -44,14 +42,19 @@ class TransferJournalManagementMutation(graphene.Mutation):
         email = graphene.String(required=True)
 
     @classmethod
+    @staff_member_required
     @login_required
     def mutate(cls, root, info, **kwargs):
         email = kwargs.pop("email")
         journal_id = kwargs.pop("journal_id")
-        editor = get_user_model().objects.get(email=email).editor
-        journal = Journal.objects.get(pk=from_global_id(journal_id).id)
 
-        editor.journals.add(journal)
+        is_editor = Editor.objects.filter(user__email=email).exists()
+
+        if not is_editor:
+            raise GraphQLError("Manager is not an editor")
+
+        editor = Editor.objects.filter(user__email=email).first()
+        journal = Journal.objects.get(pk=journal_id)
 
         journal.add_editorial_member(editor, EditorialMember.Role.CHIEF)
 

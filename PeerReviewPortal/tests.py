@@ -24,7 +24,7 @@ from Journals.models import (
 )
 from Journals.nodes import (
     JournalNode,
-    EditorNode,
+    Editor as EditorNode,
     ReviewerNode,
     JournalReportQuestionNode,
 )

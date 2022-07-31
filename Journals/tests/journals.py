@@ -5,13 +5,11 @@ from django.contrib.auth.models import Group
 from graphene_django.utils.testing import GraphQLTestCase
 from graphene_file_upload.django.testing import GraphQLFileUploadTestMixin
 from graphql_jwt.shortcuts import get_token
-from graphql_relay import to_global_id
 
 from mixer.backend.django import mixer
 
 from Cores.models import SubjectDiscipline
 from Journals.models.roles import EditorialMember
-from Journals.nodes.journals import JournalNode
 from ..models.journals import Journal
 from ..models.editors import Editor
 
@@ -98,7 +96,7 @@ class JournalTestcase(GraphQLFileUploadTestMixin, GraphQLTestCase):
 
         input = {
             "email": editor.user.email,
-            "journalId": to_global_id(JournalNode, journal.pk),
+            "journalId": journal.pk,
         }
 
         response = self.query(

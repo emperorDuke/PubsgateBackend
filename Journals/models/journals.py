@@ -108,6 +108,49 @@ class Journal(models.Model):
                 return member.editor
 
 
+class RecruitmentApplication(models.Model):
+    """
+    Journals editor recruitment application lists
+    """
+
+    class Status(models.IntegerChoices):
+        PROCESSING = 1, _("processing")
+        ACCEPTED = 2, _("accept")
+        REJECTED = 3, _("rejected")
+        COMPLETED = 4, _("completed")
+
+    class Role(models.IntegerChoices):
+        EDITOR = 1, _("editor")
+        REVIEWER = 2, _("reviewer")
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="editorial_applications",
+        on_delete=models.CASCADE,
+    )
+    role = models.PositiveIntegerField(
+        _("role"), default=Role.EDITOR, choices=Role.choices
+    )
+    journal = models.ForeignKey(
+        Journal,
+        related_name="recruitment_applications",
+        on_delete=models.CASCADE,
+    )
+    status = models.IntegerField(
+        _("recruitment_status"),
+        choices=Status.choices,
+        default=Status.PROCESSING,
+    )
+    created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("recruitment application")
+        verbose_name_plural = _("recruitment applications")
+        db_table = "recruitment_applications"
+        ordering = ["-created_at"]
+
+
 class JournalPermission(models.Model):
     """
     Journal internal permissions

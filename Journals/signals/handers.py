@@ -50,6 +50,7 @@ def create_editorial_board_roles(sender, instance, created, *args, **kwargs):
                     **{
                         "role": getattr(EditorialMember.Role, role),
                         "journal": instance,
+                        ### this is a temporary solution
                         "access_login": make_password(
                             "".join(
                                 random.choice(string.ascii_letters) for i in range(6)

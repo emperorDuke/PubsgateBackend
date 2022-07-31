@@ -1,4 +1,4 @@
-from .editors import EditorNode
+from .editors import Editor
 from .journals import (
     JournalNode,
     JournalPermissionNode,

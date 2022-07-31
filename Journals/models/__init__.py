@@ -9,6 +9,7 @@ from .journals import (
     JournalVolume,
     JournalVolumeIssue,
     JournalReportQuestion,
+    RecruitmentApplication,
 )
 from .roles import Role, EditorialMember
 from .reviewers import Reviewer

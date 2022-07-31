@@ -48,6 +48,7 @@ def editor_in_chief_required(input_key="journal_id"):
 
             if "input" in kwargs and len(args) == 3:
                 journal_id = kwargs["input"].get(input_key, None)
+                journal_id = from_global_id(journal_id).id
             else:
                 journal_id = kwargs.get(input_key, None)
 
@@ -55,7 +56,7 @@ def editor_in_chief_required(input_key="journal_id"):
                 raise PermissionDenied("Journal ID is required")
 
             journal_member = EditorialMember.objects.filter(
-                journal__pk=from_global_id(journal_id).id,
+                journal__pk=journal_id,
                 role=EditorialMember.Role.CHIEF,
                 editor__user__pk=context.user.pk,
             )
