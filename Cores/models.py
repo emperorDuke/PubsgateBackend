@@ -15,7 +15,7 @@ class SubjectDiscipline(models.Model):
     class Meta:
         verbose_name = _("subject_discipline")
         verbose_name_plural = _("subject_disciplines")
-        ordering = ("-created_at",)
+        ordering = ("name",)
         db_table = "subject_displicines"
 
     def __str__(self):

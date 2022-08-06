@@ -5,11 +5,12 @@ from graphene_django.utils.testing import GraphQLTestCase
 from graphql_jwt.shortcuts import get_token
 from graphql_relay import to_global_id
 from graphene.utils.str_converters import to_snake_case
+from mixer.backend.django import mixer
 
 from Users.nodes import User as UserNode
 
 
-class UsersTests(GraphQLTestCase):
+class UsersTestcase(GraphQLTestCase):
 
     GRAPHQL_URL = "http://localhost/graphql"
 

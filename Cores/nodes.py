@@ -11,7 +11,6 @@ class SubjectDiscipline(DjangoObjectType):
             "id",
             "name",
         )
-        interfaces = (graphene.relay.Node,)
 
 
 class TermOfServiceNode(DjangoObjectType):

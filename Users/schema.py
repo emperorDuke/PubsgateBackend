@@ -17,10 +17,10 @@ class Mutation(graphene.ObjectType):
 class Query(graphene.ObjectType):
     users = DjangoConnectionField(UserNode)
     user = graphene.Field(UserNode, id=graphene.ID(required=True))
-    logged_in_user = graphene.Field(UserNode)
+    logged_in_user = graphene.Field(UserNode, token=graphene.String(required=True))
 
     @login_required
-    def resolve_logged_in_user(root, info):
+    def resolve_logged_in_user(root, info, **kwargs):
         return info.context.user
 
     @login_required
