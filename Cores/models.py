@@ -1,4 +1,5 @@
 from django.db import models
+from django.template.defaultfilters import slugify
 from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
@@ -10,6 +11,7 @@ class SubjectDiscipline(models.Model):
     """
 
     name = models.CharField(_("discipline"), max_length=255, blank=False, unique=True)
+    slug = models.CharField(_("slug"), max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -20,6 +22,12 @@ class SubjectDiscipline(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.slug = slugify(self.name)
+
+        super(SubjectDiscipline, self).save(*args, **kwargs)
 
 
 class TermOfService(models.Model):

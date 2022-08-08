@@ -10,6 +10,7 @@ class SubjectDiscipline(DjangoObjectType):
         fields = (
             "id",
             "name",
+            "slug"
         )
 
 
