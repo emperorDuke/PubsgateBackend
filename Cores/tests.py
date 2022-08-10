@@ -2,14 +2,14 @@ import json
 from graphene_django.utils.testing import GraphQLTestCase
 from mixer.backend.django import mixer
 
-from Cores.models import SubjectDiscipline
+from Cores.models import Discipline
 
 
 class CoreTestcase(GraphQLTestCase):
     GRAPHQL_URL = "http://localhost/graphql"
 
     def test_get_all_disciplines(self):
-        disciplines = mixer.cycle(5).blend(SubjectDiscipline)
+        disciplines = mixer.cycle(5).blend(Discipline)
 
         response = self.query(
             """

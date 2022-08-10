@@ -1,6 +1,6 @@
 import json
 
-from Cores.models import SubjectDiscipline
+from Cores.models import Discipline
 from django.contrib.auth import get_user_model, models
 from graphene_django.utils.testing import GraphQLTestCase
 from graphql_jwt.shortcuts import get_token
@@ -22,9 +22,7 @@ class EditorTestcase(GraphQLTestCase):
         cls.user = mixer.blend(get_user_model())
         cls.auth_token: str = get_token(cls.user)
         cls.headers = {"HTTP_AUTHORIZATION": f"Bearer {cls.auth_token}"}
-        cls.journal = mixer.blend(
-            Journal, subject_discipline=mixer.blend(SubjectDiscipline)
-        )
+        cls.journal = mixer.blend(Journal, subject_discipline=mixer.blend(Discipline))
 
         cls.admin_user = mixer.blend(get_user_model(), is_staff=True)
         cls.admin_auth_token: str = get_token(cls.admin_user)

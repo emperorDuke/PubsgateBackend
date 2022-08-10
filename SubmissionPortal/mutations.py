@@ -44,7 +44,7 @@ class CreateSubmissionMutation(graphene.relay.ClientIDMutation):
     @classmethod
     @login_required
     def mutate(cls, root, info, input):
-        subject_area = input.get("subject_area")
+        subject_area = input.get("subject_area", None)
         journal_name = input.get("journal_name")
         article_type = input.get("article_type")
         word_count = input.get("word_count")

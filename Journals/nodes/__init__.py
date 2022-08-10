@@ -4,6 +4,6 @@ from .journals import (
     JournalPermissionNode,
     JournalSubjectAreaNode,
     JournalReportQuestionNode,
-    JournalDetailNode,
+    JournalInformationNode,
 )
 from .reviewers import ReviewerNode

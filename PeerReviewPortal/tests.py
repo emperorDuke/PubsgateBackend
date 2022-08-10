@@ -3,7 +3,7 @@ import json
 from mixer.backend.django import mixer
 
 from SubmissionPortal.models import AuthorSubmission
-from Cores.models import ArticleType, ArticleTypeSection, SubjectDiscipline
+from Cores.models import ArticleType, ArticleTypeSection, Discipline
 
 from django.contrib.auth import get_user_model, models
 from django.core.signing import Signer
@@ -142,7 +142,7 @@ def dependencies(cls):
         **{to_snake_case(k): v for k, v in cls.userInfo.items()}
     )
 
-    dicipline = SubjectDiscipline.objects.create(name="life sciences")
+    dicipline = Discipline.objects.create(name="life sciences")
     journal = Journal.objects.create(name="biolife", subject_discipline=dicipline)
 
     journal.editors.set(cls.editors)

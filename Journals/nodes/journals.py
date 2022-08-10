@@ -2,9 +2,9 @@ import graphene
 
 from graphene_django import DjangoObjectType
 
-from Cores.nodes import SubjectDiscipline as SubjectDisciplineNode
+from Cores.nodes import Discipline as SubjectDisciplineNode
 from ..models.journals import (
-    JournalDetail,
+    JournalInformation,
     JournalPermission,
     JournalReportQuestion,
     JournalSubjectArea,
@@ -23,10 +23,10 @@ class JournalNode(DjangoObjectType):
         return self.subject_discipline
 
 
-class JournalDetailNode(DjangoObjectType):
+class JournalInformationNode(DjangoObjectType):
     class Meta:
-        model = JournalDetail
-        fields = ("id", "content", "detail_type", "created_at", "journal")
+        model = JournalInformation
+        fields = ("id", "content", "header", "created_at", "journal")
 
 
 class JournalSubjectAreaNode(DjangoObjectType):

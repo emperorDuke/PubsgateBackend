@@ -1,9 +1,9 @@
 import graphene
 
-from ..nodes import JournalDetailNode
+from ..nodes import JournalInformationNode
 
 
 class Query(graphene.ObjectType):
     journal_details = graphene.Field(
-        JournalDetailNode, journal_id=graphene.ID(required=True)
+        JournalInformationNode, journal_id=graphene.ID(required=True)
     )

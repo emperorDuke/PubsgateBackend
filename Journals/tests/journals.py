@@ -8,7 +8,7 @@ from graphql_jwt.shortcuts import get_token
 
 from mixer.backend.django import mixer
 
-from Cores.models import SubjectDiscipline
+from Cores.models import Discipline
 from Journals.models.roles import EditorialMember
 from ..models.journals import Journal
 from ..models.editors import Editor
@@ -25,7 +25,7 @@ class JournalTestcase(GraphQLFileUploadTestMixin, GraphQLTestCase):
         cls.user = mixer.blend(get_user_model(), is_staff=True)
         cls.auth_token: str = get_token(cls.user)
         cls.headers = {"HTTP_AUTHORIZATION": f"Bearer {cls.auth_token}"}
-        cls.dicipline = SubjectDiscipline.objects.create(name="life sciences")
+        cls.dicipline = Discipline.objects.create(name="life sciences")
 
     def test_staff_create_journal(self):
 

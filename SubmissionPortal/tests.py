@@ -12,7 +12,7 @@ from graphql_jwt.shortcuts import get_token
 from graphql_relay import from_global_id, to_global_id
 from graphene.utils.str_converters import to_snake_case
 
-from Cores.models import ArticleType, ArticleTypeSection, SubjectDiscipline
+from Cores.models import ArticleType, ArticleTypeSection, Discipline
 from Cores.models import TermOfService
 from Cores.nodes import ArticleTypeSectionNode, TermOfServiceNode
 
@@ -55,7 +55,7 @@ class SubmissionsTests(GraphQLFileUploadTestMixin, GraphQLTestCase):
             **{to_snake_case(k): v for k, v in cls.userInfo.items()}
         )
 
-        dicipline = SubjectDiscipline.objects.create(name="life sciences")
+        dicipline = Discipline.objects.create(name="life sciences")
         journal = Journal.objects.create(name="biolife", subject_discipline=dicipline)
         subject = JournalSubjectArea.objects.create(
             name="microbiology", journal=journal

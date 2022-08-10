@@ -3,7 +3,7 @@ import graphene
 from graphql import GraphQLError
 from graphql_jwt.decorators import login_required, staff_member_required
 
-from Cores.models import SubjectDiscipline
+from Cores.models import Discipline
 
 from Journals.models import Journal, Editor
 from Journals.models.roles import EditorialMember
@@ -23,7 +23,7 @@ class CreateJournalMutation(graphene.Mutation):
     @staff_member_required
     @login_required
     def mutate(cls, root, info, **kwargs):
-        subject_discipline = SubjectDiscipline.objects.get(
+        subject_discipline = Discipline.objects.get(
             name=kwargs.pop("subject_discipline")
         )
 
@@ -48,12 +48,11 @@ class TransferJournalManagementMutation(graphene.Mutation):
         email = kwargs.pop("email")
         journal_id = kwargs.pop("journal_id")
 
-        is_editor = Editor.objects.filter(user__email=email).exists()
+        editor = Editor.objects.filter(user__email=email).first()
 
-        if not is_editor:
+        if not editor:
             raise GraphQLError("Manager is not an editor")
 
-        editor = Editor.objects.filter(user__email=email).first()
         journal = Journal.objects.get(pk=journal_id)
 
         journal.add_editorial_member(editor, EditorialMember.Role.CHIEF)

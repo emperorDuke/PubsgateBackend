@@ -4,7 +4,7 @@ from .journals import (
     JournalPermission,
     JournalSubjectArea,
     JournalBanner,
-    JournalDetail,
+    JournalInformation,
     JournalViewLog,
     JournalVolume,
     JournalVolumeIssue,

@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 
-from Cores.models import JournalDetailType, SubjectDiscipline
+from Cores.models import InformationHeading, Discipline
 
 # Create your models here.
 
@@ -23,17 +23,19 @@ class Journal(models.Model):
         return "%s/logo/%s" % (instance.name, filename)
 
     class FrequencyType(models.IntegerChoices):
-        ANNAUL = 1, _("annual")
-        BIANNUAL = 2, _("bi-annual")
+        ANNUALLY = 1, _("annually")
+        BI_ANNUALLY = 2, _("bi-annually")
+        TRI_ANNUALLY = 3, _("tri-annually")
+        QUARTERLY = 4, _("quarterly")
 
     class ModelType(models.IntegerChoices):
-        GOLD_ACCESS = 1, _("open-access")
-        HYBRID = 2, _("hybrid")
+        OPEN_ACCESS = 1, _("open-access")
+        PARTIAL_ACCESS = 2, _("partial-access")
 
     name = models.CharField(_("name"), max_length=255, unique=True)
     slug = models.SlugField(_("slug"), max_length=255, unique=True)
     access_options = models.IntegerField(
-        _("access_model"), default=ModelType.GOLD_ACCESS, choices=ModelType.choices
+        _("access_model"), default=ModelType.OPEN_ACCESS, choices=ModelType.choices
     )
     issn = models.CharField(_("ISSN"), max_length=255, blank=False)
     publication_start_year = models.CharField(
@@ -44,14 +46,14 @@ class Journal(models.Model):
     publication_frequency = models.IntegerField(
         _("publication_frequency"),
         choices=FrequencyType.choices,
-        default=FrequencyType.BIANNUAL,
+        default=FrequencyType.BI_ANNUALLY,
     )
     iso_abbreviation = models.CharField(
         _("ISO_abbreviation"), max_length=255, null=True, default=None
     )
     logo = models.ImageField(_("logo"), upload_to=upload_to, null=True, blank=True)
     subject_discipline = models.ForeignKey(
-        SubjectDiscipline, related_name="journals", on_delete=models.PROTECT
+        Discipline, related_name="journals", on_delete=models.PROTECT
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -224,27 +226,32 @@ class JournalBanner(models.Model):
         ordering = ["created_at"]
 
 
-class JournalDetail(models.Model):
+class JournalInformation(models.Model):
     """
     The details of the journal like aim and scope, Author guidelines etc.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    content = models.JSONField(_("content"))
-    detail_type = models.ForeignKey(JournalDetailType, on_delete=models.CASCADE)
+    content = models.JSONField(_("content"), blank=True, null=True)
+    heading = models.ForeignKey(InformationHeading, on_delete=models.CASCADE)
     journal = models.ForeignKey(
         Journal, related_name="details", on_delete=models.CASCADE
     )
     created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
 
     class Meta:
-        db_table = "journal_details"
-        verbose_name = _("journal detail")
-        verbose_name_plural = _("journal details")
+        db_table = "journal_information"
+        verbose_name = _("journal information")
+        verbose_name_plural = _("journal informations")
         ordering = ["created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["heading", "journal"], name="unique_journal_headings"
+            )
+        ]
 
     def __str__(self) -> str:
-        return self.detail_type.name
+        return self.heading.name
 
 
 class JournalViewLog(models.Model):
@@ -263,13 +270,14 @@ class JournalViewLog(models.Model):
 
     class Meta:
         db_table = "journal_view_logs"
-        verbose_name = _("journal_view_log")
-        verbose_name_plural = _("journal_view_logs")
+        verbose_name = _("journal view log")
+        verbose_name_plural = _("journal view logs")
         ordering = ["-created_at"]
 
 
 class JournalVolume(models.Model):
     name = models.CharField(_("name"), max_length=200)
+    is_active = models.BooleanField(_("is_active"), default=False)
     journal = models.ForeignKey(
         Journal, related_name="volumes", on_delete=models.CASCADE
     )
@@ -288,6 +296,7 @@ class JournalVolume(models.Model):
 class JournalVolumeIssue(models.Model):
     name = models.CharField(_("name"), max_length=200)
     is_special = models.BooleanField(default=False)
+    is_active = models.BooleanField(_("is_active"), default=False)
     created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
     volume = models.ForeignKey(
         JournalVolume, related_name="issues", on_delete=models.CASCADE
@@ -314,27 +323,10 @@ class JournalReportQuestion(models.Model):
     created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
 
     class Meta:
-        verbose_name = _("journal_report_question")
-        verbose_name_plural = _("journal_report_questions")
+        verbose_name = _("journal report question")
+        verbose_name_plural = _("journal report questions")
         ordering = ["created_at"]
         db_table = "journal_report_questions"
 
     def __str__(self) -> str:
         return self.question
-
-
-# class JournalSetting(models.Model):
-#     label = models.CharField(_("label"), max_length=255)
-#     hint = models.CharField(_("hint"), max_length=255)
-#     options = models.JSONField(_("options"), blank=True, null=True)
-#     group = models.CharField(_("group"), max_length=255)
-#     journal = models.ForeignKey(
-#         Journal, related_name="settings", on_delete=models.CASCADE
-#     )
-
-
-# class JournalSettingState(models.Model):
-#     setting = models.ForeignKey(
-#         JournalSetting, related_name="states", on_delete=models.CASCADE
-#     )
-#     state = models.CharField(_("state"), max_length=255)

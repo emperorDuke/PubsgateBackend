@@ -1,17 +1,13 @@
 import graphene
 from graphene_django import DjangoObjectType
 
-from .models import ArticleTypeSection, SubjectDiscipline, TermOfService, ArticleType
+from .models import ArticleTypeSection, Discipline, TermOfService, ArticleType
 
 
-class SubjectDiscipline(DjangoObjectType):
+class Discipline(DjangoObjectType):
     class Meta:
-        model = SubjectDiscipline
-        fields = (
-            "id",
-            "name",
-            "slug"
-        )
+        model = Discipline
+        fields = ("id", "name", "slug")
 
 
 class TermOfServiceNode(DjangoObjectType):

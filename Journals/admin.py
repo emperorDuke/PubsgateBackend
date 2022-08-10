@@ -5,7 +5,7 @@ import Journals.models as _
 
 admin.site.register(_.Journal)
 admin.site.register(_.JournalBanner)
-admin.site.register(_.JournalDetail)
+admin.site.register(_.JournalInformation)
 admin.site.register(_.JournalVolumeIssue)
 admin.site.register(_.JournalSubjectArea)
 admin.site.register(_.JournalViewLog)

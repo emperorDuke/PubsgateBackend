@@ -5,20 +5,20 @@ from django.utils.translation import gettext_lazy as _
 # Create your models here.
 
 
-class SubjectDiscipline(models.Model):
+class Discipline(models.Model):
     """
     Subject disciplines supported by the publisher
     """
 
-    name = models.CharField(_("discipline"), max_length=255, blank=False, unique=True)
+    name = models.CharField(_("name"), max_length=255, blank=False, unique=True)
     slug = models.CharField(_("slug"), max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = _("subject_discipline")
-        verbose_name_plural = _("subject_disciplines")
+        verbose_name = _("discipline")
+        verbose_name_plural = _("disciplines")
         ordering = ("name",)
-        db_table = "subject_displicines"
+        db_table = "displicines"
 
     def __str__(self):
         return self.name
@@ -27,7 +27,7 @@ class SubjectDiscipline(models.Model):
         if not self.id:
             self.slug = slugify(self.name)
 
-        super(SubjectDiscipline, self).save(*args, **kwargs)
+        super(Discipline, self).save(*args, **kwargs)
 
 
 class TermOfService(models.Model):
@@ -38,7 +38,7 @@ class TermOfService(models.Model):
     section = models.CharField(_("section"), max_length=255)
     question = models.CharField(_("question"), max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
-    discipline = models.ManyToManyField(SubjectDiscipline, related_name="terms")
+    discipline = models.ManyToManyField(Discipline, related_name="terms")
     group = models.CharField(_("group"), max_length=255, null=True, blank=True)
 
     class Meta:
@@ -95,9 +95,9 @@ class ArticleTypeSection(models.Model):
         return self.name
 
 
-class JournalDetailType(models.Model):
+class InformationHeading(models.Model):
     """
-    Journal detail types
+    Journal information headings
     e.g about, aim and scope, guidelines etc
     """
 
@@ -105,10 +105,10 @@ class JournalDetailType(models.Model):
     created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
 
     class Meta:
-        verbose_name = _("journal detail type")
-        verbose_name_plural = _("journal detail types")
+        verbose_name = _("information heading")
+        verbose_name_plural = _("information headings")
         ordering = ("created_at",)
-        db_table = "journal_detail_types"
+        db_table = "information_headings"
 
     def __str__(self) -> str:
         return self.name

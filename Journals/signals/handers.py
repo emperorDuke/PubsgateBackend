@@ -6,6 +6,9 @@ from django.db.models.signals import post_save
 from django.contrib.auth.models import Group
 from django.contrib.auth.hashers import make_password
 
+from Cores.models import InformationHeading
+from Journals.models.journals import JournalInformation
+
 from ..models import Journal, JournalPermission, Reviewer, Editor, EditorialMember
 from ..permissions import JournalPermissionChoice
 
@@ -31,6 +34,15 @@ def add_editor_to_group(sender, instance, created, *args, **kwargs):
 @receiver(post_save, sender=Journal)
 def create_editorial_board_roles(sender, instance, created, *args, **kwargs):
     if created:
+        information_headings = InformationHeading.objects.all()
+
+        JournalInformation.objects.bulk_create(
+            [
+                JournalInformation(journal=instance, heading=heading)
+                for heading in information_headings
+            ]
+        )
+
         JournalPermission.objects.bulk_create(
             [
                 JournalPermission(
