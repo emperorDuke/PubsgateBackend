@@ -23,7 +23,7 @@ from Journals.models import (
     JournalReportQuestion,
 )
 from Journals.nodes import (
-    JournalNode,
+    Journal as JournalType,
     Editor as EditorNode,
     ReviewerNode,
     JournalReportQuestionNode,
@@ -143,7 +143,7 @@ def dependencies(cls):
     )
 
     dicipline = Discipline.objects.create(name="life sciences")
-    journal = Journal.objects.create(name="biolife", subject_discipline=dicipline)
+    journal = Journal.objects.create(name="biolife", discipline=dicipline)
 
     journal.editors.set(cls.editors)
     journal.reviewers.set(cls.reviewers)
@@ -154,7 +154,7 @@ def dependencies(cls):
 
     cls.data = {
         "isAccepted": True,
-        "journalId": to_global_id(JournalNode, cls.journal.pk),
+        "journalId": to_global_id(JournalType, cls.journal.pk),
         "editors": [
             {
                 "editorId": to_global_id(EditorNode, cls.editors[0].pk),
@@ -460,7 +460,7 @@ class InviteReviewerMutationTest(GraphQLTestCase):
 
         data = {
             "submissionId": to_global_id(JournalSubmissionNode, self.submission.pk),
-            "journalId": to_global_id(JournalNode, self.journal.pk),
+            "journalId": to_global_id(JournalType, self.journal.pk),
             "emailAddresses": [
                 "reviewer1@gmail.com",
                 "reviewer2@gmail.com",
@@ -562,7 +562,7 @@ class AcceptSubmissionTest(GraphQLTestCase):
 
         data = {
             "isAccepted": True,
-            "journalId": to_global_id(JournalNode, self.journal.pk),
+            "journalId": to_global_id(JournalType, self.journal.pk),
             "submissionId": to_global_id(SubmissionNode, submission.pk),
         }
 
@@ -638,7 +638,7 @@ class UpdateMemberPermissionMutation(GraphQLTestCase):
         ).exists()
 
         data = {
-            "journalId": to_global_id(JournalNode, self.journal.pk),
+            "journalId": to_global_id(JournalType, self.journal.pk),
             "submissionId": to_global_id(SubmissionNode, self.submission.pk),
             "editorialMemberId": to_global_id(EditorialMemberNode, next_handler.pk),
             "clientMutationId": "d4f4f444",
@@ -707,7 +707,7 @@ class CreateEditorReport(GraphQLTestCase):
 
         data = {
             "report": "the manuscript is good",
-            "journalId": to_global_id(JournalNode, self.journal.pk),
+            "journalId": to_global_id(JournalType, self.journal.pk),
             "submissionId": to_global_id(SubmissionNode, self.submission.pk),
         }
 
@@ -851,7 +851,7 @@ class EditorQueryTest(GraphQLTestCase):
         editor.journals.add(self.journal)
         self.journal.add_editorial_member(editor, EditorialMember.Role.CHIEF)
 
-        data = {"journalId": to_global_id(JournalNode, self.journal.pk)}
+        data = {"journalId": to_global_id(JournalType, self.journal.pk)}
 
         response = self.query(
             """
@@ -917,7 +917,7 @@ class EditorQueryTest(GraphQLTestCase):
         self.journal.add_editorial_member(editor, EditorialMember.Role.CHIEF)
 
         data = {
-            "journalId": to_global_id(JournalNode, self.journal.pk),
+            "journalId": to_global_id(JournalType, self.journal.pk),
             "submissionId": to_global_id(JournalSubmissionNode, submission.pk),
         }
 
@@ -1032,7 +1032,7 @@ class ReviewerQuery(GraphQLTestCase):
             submission.reviewers.add(cls.reviewer_1)
 
     def test_query_all_reviewer_submissions(self):
-        data = {"journalId": to_global_id(JournalNode, self.journal.pk)}
+        data = {"journalId": to_global_id(JournalType, self.journal.pk)}
 
         response = self.query(
             """
@@ -1067,7 +1067,7 @@ class ReviewerQuery(GraphQLTestCase):
 
     def test_query_reviewer_submission(self):
         data = {
-            "journalId": to_global_id(JournalNode, self.journal.pk),
+            "journalId": to_global_id(JournalType, self.journal.pk),
             "submissionId": to_global_id(JournalSubmissionNode, self.submissions[0].pk),
         }
 
@@ -1116,7 +1116,7 @@ class ReviewerQuery(GraphQLTestCase):
         )
 
         data = {
-            "journalId": to_global_id(JournalNode, self.journal.pk),
+            "journalId": to_global_id(JournalType, self.journal.pk),
             "reportId": to_global_id(ReviewerReportNode, report.pk),
         }
 

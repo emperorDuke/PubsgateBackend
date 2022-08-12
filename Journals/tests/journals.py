@@ -9,7 +9,7 @@ from graphql_jwt.shortcuts import get_token
 from mixer.backend.django import mixer
 
 from Cores.models import Discipline
-from Journals.models.roles import EditorialMember
+from ..models.roles import EditorialMember
 from ..models.journals import Journal
 from ..models.editors import Editor
 
@@ -122,4 +122,11 @@ class JournalTestcase(GraphQLFileUploadTestMixin, GraphQLTestCase):
                 role=EditorialMember.Role.CHIEF.value
             ).editor.user.first_name,
             editor.user.first_name,
+        )
+
+    def test_edit_journal(self):
+        response = self.query(
+            """
+            mutation 
+            """
         )

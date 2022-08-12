@@ -1,11 +1,11 @@
 from graphene_django import DjangoObjectType
 
-from ..models import Editor
+from ..models import Editor as EditorModel
 
 
 class Editor(DjangoObjectType):
     class Meta:
-        model = Editor
+        model = EditorModel
         fields = [
             "id",
             "affiliation",

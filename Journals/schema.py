@@ -1,30 +1,30 @@
 import graphene
-from graphql_jwt.decorators import login_required
-from Journals.models.editors import Editor
 
-from Journals.mutations import CreateEditorMutation
-from Journals.mutations.editors import AcceptEditorMutation, AdminCreateEditorMutation
-from Journals.mutations.journals import (
+from .mutations import (
+    AcceptEditorMutation,
+    AdminCreateEditorMutation,
+    CreateEditorMutation,
     CreateJournalMutation,
+    EditJournalInformationMutation,
+    EditJournalMutation,
+    JournalSubjectAreaMutation,
     TransferJournalManagementMutation,
 )
-from Journals.nodes import Editor as EditorNode
+from .queries import EditorQuery, JournalQuery
 
 
 class Mutation(graphene.ObjectType):
+    ### editor mutations
     create_editor = CreateEditorMutation.Field()
-    create_journal = CreateJournalMutation.Field()
-    transfer_management = TransferJournalManagementMutation.Field()
     admin_create_editor = AdminCreateEditorMutation.Field()
     accept_editor = AcceptEditorMutation.Field()
+    ## journal mutations
+    create_journal = CreateJournalMutation.Field()
+    transfer_management = TransferJournalManagementMutation.Field()
+    edit_journal = EditJournalMutation.Field()
+    journal_subject_area = JournalSubjectAreaMutation.Field()
+    edit_journal_information = EditJournalInformationMutation.Field()
 
 
-class Query(graphene.ObjectType):  #
-    editor = graphene.Field(EditorNode, id=graphene.ID(required=True))
-
-    @login_required
-    def resolve_editor(root, info, **kwargs):
-        id = kwargs.get("id")
-        editor = Editor.objects.get(pk=id)
-
-        return editor
+class Query(JournalQuery, EditorQuery, graphene.ObjectType):
+    pass

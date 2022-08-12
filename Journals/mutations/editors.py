@@ -17,10 +17,9 @@ class AcceptEditorMutation(graphene.Mutation):
         email = graphene.String(required=True)
         journal_id = graphene.ID(required=True)
 
-    @classmethod
     @editor_in_chief_required()
     @login_required
-    def mutate(cls, root, info, **kwargs):
+    def mutate(root, info, **kwargs):
         journal_id = kwargs.get("journal_id")
         email = kwargs.get("email")
 
@@ -63,9 +62,8 @@ class CreateEditorMutation(graphene.Mutation):
         journal_id = graphene.ID(required=True)
         specialisation = graphene.String(required=True)
 
-    @classmethod
     @login_required
-    def mutate(cls, root, info, **kwargs):
+    def mutate(root, info, **kwargs):
         user = info.context.user
         affiliation = kwargs.get("affiliation")
         phone_number = kwargs.get("phone_number")
@@ -126,10 +124,9 @@ class AdminCreateEditorMutation(graphene.Mutation):
         journal_id = graphene.ID(required=True)
         specialisation = graphene.String()
 
-    @classmethod
     @staff_member_required
     @login_required
-    def mutate(cls, root, info, **kwargs):
+    def mutate(root, info, **kwargs):
         affiliation = kwargs.get("affiliation", None)
         phone_number = kwargs.get("phone_number", None)
         specialisation = kwargs.get("specialisation", None)

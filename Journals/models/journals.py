@@ -22,7 +22,7 @@ class Journal(models.Model):
     def upload_to(instance, filename):
         return "%s/logo/%s" % (instance.name, filename)
 
-    class FrequencyType(models.IntegerChoices):
+    class PublicationFrequency(models.IntegerChoices):
         ANNUALLY = 1, _("annually")
         BI_ANNUALLY = 2, _("bi-annually")
         TRI_ANNUALLY = 3, _("tri-annually")
@@ -38,21 +38,19 @@ class Journal(models.Model):
         _("access_model"), default=ModelType.OPEN_ACCESS, choices=ModelType.choices
     )
     issn = models.CharField(_("ISSN"), max_length=255, blank=False)
-    publication_start_year = models.CharField(
-        _("publication_start_year"),
-        max_length=255,
-        default=str(timezone.now().today().year),
+    publication_start_date = models.DateField(
+        _("publication_start_date"), default=timezone.now
     )
     publication_frequency = models.IntegerField(
         _("publication_frequency"),
-        choices=FrequencyType.choices,
-        default=FrequencyType.BI_ANNUALLY,
+        choices=PublicationFrequency.choices,
+        default=PublicationFrequency.BI_ANNUALLY,
     )
     iso_abbreviation = models.CharField(
         _("ISO_abbreviation"), max_length=255, null=True, default=None
     )
     logo = models.ImageField(_("logo"), upload_to=upload_to, null=True, blank=True)
-    subject_discipline = models.ForeignKey(
+    discipline = models.ForeignKey(
         Discipline, related_name="journals", on_delete=models.PROTECT
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -235,12 +233,12 @@ class JournalInformation(models.Model):
     content = models.JSONField(_("content"), blank=True, null=True)
     heading = models.ForeignKey(InformationHeading, on_delete=models.CASCADE)
     journal = models.ForeignKey(
-        Journal, related_name="details", on_delete=models.CASCADE
+        Journal, related_name="informations", on_delete=models.CASCADE
     )
     created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
 
     class Meta:
-        db_table = "journal_information"
+        db_table = "journal_informations"
         verbose_name = _("journal information")
         verbose_name_plural = _("journal informations")
         ordering = ["created_at"]

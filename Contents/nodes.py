@@ -1,7 +1,7 @@
 import graphene
 from graphene_django import DjangoObjectType
 
-from Journals.nodes import JournalNode
+from Journals.nodes import Journal as JournalType
 
 from .models import (
     Manuscript,
@@ -40,7 +40,7 @@ class ManuscriptKeywordTagNode(DjangoObjectType):
 
 class ManuscriptNode(DjangoObjectType):
 
-    journal = graphene.Field(JournalNode)
+    journal = graphene.Field(JournalType)
 
     class Meta:
         model = Manuscript

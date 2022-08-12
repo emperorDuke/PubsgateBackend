@@ -4,12 +4,12 @@ import graphql_jwt
 import SubmissionPortal.schema as SubmissionPortalSchema
 import Users.schema as UserSchema
 import PeerReviewPortal.schema as PeerReviewSchema
-import Journals.schema as EditorsSchema
+import Journals.schema as JournalSchema
 import Cores.schema as CoreSchema
 
 
 class Mutation(
-    EditorsSchema.Mutation,
+    JournalSchema.Mutation,
     PeerReviewSchema.Mutation,
     SubmissionPortalSchema.Mutation,
     UserSchema.Mutation,
@@ -23,7 +23,7 @@ class Mutation(
 
 class Query(
     CoreSchema.Query,
-    EditorsSchema.Query,
+    JournalSchema.Query,
     PeerReviewSchema.Query,
     SubmissionPortalSchema.Query,
     UserSchema.Query,

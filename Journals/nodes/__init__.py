@@ -1,9 +1,9 @@
 from .editors import Editor
 from .journals import (
-    JournalNode,
+    Journal,
     JournalPermissionNode,
-    JournalSubjectAreaNode,
+    JournalSubjectArea,
     JournalReportQuestionNode,
-    JournalInformationNode,
+    JournalInformation,
 )
 from .reviewers import ReviewerNode

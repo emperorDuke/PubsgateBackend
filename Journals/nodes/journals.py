@@ -4,34 +4,34 @@ from graphene_django import DjangoObjectType
 
 from Cores.nodes import Discipline as SubjectDisciplineNode
 from ..models.journals import (
-    JournalInformation,
+    JournalInformation as JournalInformationModel,
     JournalPermission,
     JournalReportQuestion,
-    JournalSubjectArea,
-    Journal,
+    JournalSubjectArea as JournalSubjectAreaModel,
+    Journal as JournalModel,
 )
 
 
-class JournalNode(DjangoObjectType):
+class Journal(DjangoObjectType):
     discipline = graphene.Field(SubjectDisciplineNode)
 
     class Meta:
-        model = Journal
+        model = JournalModel
         fields = ("id", "name")
 
     def resolve_discipline(self, info):
-        return self.subject_discipline
+        return self.discipline
 
 
-class JournalInformationNode(DjangoObjectType):
+class JournalInformation(DjangoObjectType):
     class Meta:
-        model = JournalInformation
-        fields = ("id", "content", "header", "created_at", "journal")
+        model = JournalInformationModel
+        fields = ("id", "content", "heading", "created_at", "journal")
 
 
-class JournalSubjectAreaNode(DjangoObjectType):
+class JournalSubjectArea(DjangoObjectType):
     class Meta:
-        model = JournalSubjectArea
+        model = JournalSubjectAreaModel
         fields = ("id", "name")
 
 
@@ -39,7 +39,6 @@ class JournalPermissionNode(DjangoObjectType):
     class Meta:
         model = JournalPermission
         fields = ["id", "code_name", "label", "journal"]
-        interfaces = (graphene.relay.Node,)
 
 
 class JournalReportQuestionNode(DjangoObjectType):
