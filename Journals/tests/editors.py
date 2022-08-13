@@ -4,12 +4,9 @@ from Cores.models import Discipline
 from django.contrib.auth import get_user_model, models
 from graphene_django.utils.testing import GraphQLTestCase
 from graphql_jwt.shortcuts import get_token
-from Journals.models import Journal
 from mixer.backend.django import mixer
-from Journals.models.journals import RecruitmentApplication
 
-from Journals.models.roles import EditorialMember
-from ..models import Reviewer, Editor
+from ..models import Editor, Journal, RecruitmentApplication, Reviewer
 
 # Create your tests here.
 
@@ -85,7 +82,7 @@ class EditorTestcase(GraphQLTestCase):
         editor = mixer.blend(Editor, user=self.user)
 
         editor.journals.add(self.journal)
-        self.journal.add_editorial_member(editor, EditorialMember.Role.CHIEF)
+        self.journal.make_editor_chief(editor)
 
         data = {"email": user.email, "journalId": self.journal.pk}
 

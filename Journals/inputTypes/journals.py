@@ -8,7 +8,6 @@ class Action(graphene.Enum):
 
 
 class JournalInformationInput(graphene.InputObjectType):
-    id = graphene.ID(required=True)
     heading_id = graphene.ID(required=True)
     content = graphene.JSONString(required=True)
 

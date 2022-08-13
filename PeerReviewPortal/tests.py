@@ -229,7 +229,7 @@ class AssignHandlingEditorsTest(GraphQLTestCase):
         )
 
         editor.journals.add(self.journal)
-        self.journal.add_editorial_member(editor, EditorialMember.Role.CHIEF)
+        self.journal.make_editor_chief(editor)
 
         data = {
             "submissionId": to_global_id(JournalSubmissionNode, submission.pk),
@@ -558,7 +558,7 @@ class AcceptSubmissionTest(GraphQLTestCase):
         editor = mixer.blend(Editor, user=self.user)
 
         editor.journals.add(self.journal)
-        self.journal.add_editorial_member(editor, EditorialMember.Role.CHIEF)
+        self.journal.make_editor_chief(editor)
 
         data = {
             "isAccepted": True,
@@ -849,7 +849,7 @@ class EditorQueryTest(GraphQLTestCase):
         )
 
         editor.journals.add(self.journal)
-        self.journal.add_editorial_member(editor, EditorialMember.Role.CHIEF)
+        self.journal.make_editor_chief(editor)
 
         data = {"journalId": to_global_id(JournalType, self.journal.pk)}
 
@@ -914,7 +914,7 @@ class EditorQueryTest(GraphQLTestCase):
         )
 
         editor.journals.add(self.journal)
-        self.journal.add_editorial_member(editor, EditorialMember.Role.CHIEF)
+        self.journal.make_editor_chief(editor)
 
         data = {
             "journalId": to_global_id(JournalType, self.journal.pk),

@@ -13,19 +13,20 @@ class CoreTestcase(GraphQLTestCase):
 
         response = self.query(
             """
-            query GetSubjectDisciplines {
-                subjectDisciplines {
+            query GetDisciplines {
+                disciplines {
                     id
                     name
+                    slug
                 }
             }
             """,
-            operation_name="GetSubjectDisciplines",
+            operation_name="GetDisciplines",
         )
 
         self.assertResponseNoErrors(response)
 
-        content = json.loads(response.content)["data"]["subjectDisciplines"]
+        content = json.loads(response.content)["data"]["disciplines"]
 
         self.assertEqual(len(content), len(disciplines))
         self.assertTrue(content[0]["name"] in [d.name for d in disciplines])

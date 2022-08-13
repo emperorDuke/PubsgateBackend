@@ -1,7 +1,13 @@
 import graphene
 from graphene_django import DjangoObjectType
 
-from .models import ArticleTypeSection, Discipline, TermOfService, ArticleType
+from .models import (
+    ArticleTypeSection,
+    Discipline,
+    TermOfService,
+    ArticleType,
+    InformationHeading,
+)
 
 
 class Discipline(DjangoObjectType):
@@ -29,3 +35,9 @@ class ArticleTypeSectionNode(DjangoObjectType):
         model = ArticleTypeSection
         fields = "__all__"
         interfaces = (graphene.relay.Node,)
+
+
+class InformationHeading(DjangoObjectType):
+    class Meta:
+        model = InformationHeading
+        fields = ("name", "id")

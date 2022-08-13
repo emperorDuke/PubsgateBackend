@@ -1,22 +1,23 @@
-from django.shortcuts import get_object_or_404
 import graphene
+from Cores.models import Discipline
+from django.shortcuts import get_object_or_404
 from graphene_file_upload.scalars import Upload
-
 from graphql import GraphQLError
 from graphql_jwt.decorators import login_required, staff_member_required
 
-from Cores.models import Discipline
 from ..inputTypes.journals import (
     Action,
     JournalInformationInput,
     JournalSubjectAreaInput,
 )
-
-from Journals.models import Journal, Editor
-from ..models.journals import JournalInformation, JournalSubjectArea
-from Journals.models.roles import EditorialMember
-from Journals.nodes import Journal as JournalType
-from Journals.permissions import editor_in_chief_required
+from ..models import (
+    Editor,
+    Journal,
+    JournalInformation,
+    JournalSubjectArea,
+)
+from ..nodes import Journal as JournalType, JournalInformation as JournalInformationType
+from ..permissions import editor_in_chief_required
 
 
 class CreateJournalMutation(graphene.Mutation):
@@ -94,31 +95,35 @@ class JournalSubjectAreaMutation(graphene.Mutation):
 
 class EditJournalInformationMutation(graphene.Mutation):
     message = graphene.String()
+    information = graphene.List(JournalInformationType)
 
     class Arguments:
         journal_id = graphene.ID(required=True)
-        informations = graphene.List(JournalInformationInput, required=True)
+        information = graphene.List(JournalInformationInput, required=True)
 
     @editor_in_chief_required()
     @login_required
     def mutate(root, info, **kwargs):
         journal_id = kwargs.get("journal_id")
-        informations = {
-            info["heading_id"]: info["content"] for info in kwargs.get("informations")
+        information = {
+            str(info["heading_id"]): info["content"]
+            for info in kwargs.get("information")
         }
 
-        journal_informations = JournalInformation.objects.filter(
+        journal_information = JournalInformation.objects.filter(
             journal__pk=journal_id
         ).select_related("heading")
 
-        for infoModel in journal_informations:
-            heading_id = infoModel.heading.pk
+        for infoModel in journal_information:
+            heading_id = str(infoModel.heading.pk)
 
-            if heading_id in informations:
-                infoModel.content = informations[heading_id]
+            if heading_id in information:
+                infoModel.content = information[heading_id]
                 infoModel.save()
 
-        return EditJournalInformationMutation(message="success")
+        return EditJournalInformationMutation(
+            message="success", information=journal_information
+        )
 
 
 class TransferJournalManagementMutation(graphene.Mutation):
@@ -137,10 +142,10 @@ class TransferJournalManagementMutation(graphene.Mutation):
         editor = Editor.objects.filter(user__email=email).first()
 
         if not editor:
-            raise GraphQLError("Manager is not an editor")
+            raise GraphQLError("manager is not an editor")
 
         journal = Journal.objects.get(pk=journal_id)
 
-        journal.add_editorial_member(editor, EditorialMember.Role.CHIEF)
+        journal.make_editor_chief(editor)
 
         return TransferJournalManagementMutation(message="success")

@@ -1,15 +1,15 @@
+import random
 import string
 import uuid
-import random
 
+from Cores.models import Discipline, InformationHeading
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.db import models
 from django.template.defaultfilters import slugify
-from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
-from django.contrib.auth.hashers import make_password
-
-from Cores.models import InformationHeading, Discipline
+from django.utils.translation import gettext_lazy as _
+from graphql import GraphQLError
 
 # Create your models here.
 
@@ -70,12 +70,12 @@ class Journal(models.Model):
 
         super(Journal, self).save(*args, **kwargs)
 
-    def add_editorial_member(self, editor, role):
+    def make_editor_chief(self, editor):
         """
         Create the editorial member role and assign editor to it
         """
         member = self.editorial_members.create(
-            role=role,
+            role=1,
             editor=editor,
             journal=self,
             access_login=make_password(
@@ -92,12 +92,14 @@ class Journal(models.Model):
         """
         Assign the editor a role in the journal
         """
-        member = self.editorial_members.get(role=role.value)
+        if role.name == "CHIEF":
+            raise GraphQLError("action forbidden: cannot make editor a chief")
 
-        member.editor = editor
-        member.save()
+        ## remove the editor from old role
+        self.editorial_members.filter(editor=editor).update(editor=None)
 
-        return member
+        ## assign the editor a new role
+        self.editorial_members.filter(role=role.value).update(editor=editor)
 
     def get_editorial_board_member(self, role):
         """
