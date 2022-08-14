@@ -53,7 +53,7 @@ class JournalInformation(DjangoObjectType):
 class JournalSubjectArea(DjangoObjectType):
     class Meta:
         model = JournalSubjectAreaModel
-        fields = ("id", "name")
+        fields = ("id", "name", "journal")
 
 
 class JournalPermissionNode(DjangoObjectType):

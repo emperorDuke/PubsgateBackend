@@ -1,33 +1,18 @@
 import json
 import time
 
+from Cores.models import Discipline, InformationHeading
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
-
 from graphene_django.utils.testing import GraphQLTestCase
 from graphene_file_upload.django.testing import GraphQLFileUploadTestMixin
 from graphql_jwt.shortcuts import get_token
-
 from mixer.backend.django import mixer
 
-from Cores.models import Discipline, InformationHeading
-from ..models.roles import EditorialMember
-from ..models.journals import Journal, JournalSubjectArea
 from ..models.editors import Editor
-
-
-def create_editor_in_chief_test_data(cls):
-    mixer.cycle(4).blend(InformationHeading)
-    user = mixer.blend(get_user_model())
-    cls.editor = mixer.blend(Editor, user=user)
-    cls.journal = mixer.blend(Journal)
-
-    auth_token = get_token(user)
-
-    cls.editor.journals.add(cls.journal)
-    cls.journal.make_editor_chief(cls.editor)
-    cls.editor_headers = {"HTTP_AUTHORIZATION": f"Bearer {auth_token}"}
+from ..models.journals import Journal, JournalInformation, JournalSubjectArea
+from ..models.roles import EditorialMember
 
 
 class JournalTestcase(GraphQLFileUploadTestMixin, GraphQLTestCase):
@@ -43,7 +28,38 @@ class JournalTestcase(GraphQLFileUploadTestMixin, GraphQLTestCase):
         cls.headers = {"HTTP_AUTHORIZATION": f"Bearer {cls.auth_token}"}
         cls.dicipline = Discipline.objects.create(name="life sciences")
 
-        create_editor_in_chief_test_data(cls)
+        cls.n_info_heading = 4
+        cls.information_headings = mixer.cycle(cls.n_info_heading).blend(
+            InformationHeading
+        )
+        user = mixer.blend(get_user_model())
+        cls.editor = mixer.blend(Editor, user=user)
+        cls.journal = mixer.blend(Journal)
+
+        auth_token = get_token(user)
+
+        cls.editor.journals.add(cls.journal)
+        cls.journal.make_editor_chief(cls.editor)
+        cls.editor_headers = {"HTTP_AUTHORIZATION": f"Bearer {auth_token}"}
+
+        cls.formatted_information = [
+            {
+                "type": "paragraph",
+                "children": [
+                    {
+                        "text": (
+                            "Upon discovery that the Boquila trifoliolata is capable of flexible leaf mimicry, the question of the"
+                            "mechanism behind this ability has been unanswered. Here, we demonstrate that plant vision possibly"
+                            "via plant-specific ocelli is a plausible hypothesis. A simple experiment by placing an artificial vine model"
+                            "above the living plants has shown that these will attempt to mimic the artificial leaves. The experiment"
+                            "has been carried out with multiple plants, and each plant has shown attempts at mimicry. It was observed"
+                            "that mimic leaves showed altered leaf areas, perimeters, lengths, and widths compared to non-mimic"
+                            "leaves. We have calculated four morphometrical features and observed that mimic leaves showed higher"
+                        )
+                    }
+                ],
+            }
+        ]
 
     def test_staff_create_journal(self):
         """
@@ -249,7 +265,7 @@ class JournalTestcase(GraphQLFileUploadTestMixin, GraphQLTestCase):
             Journal.PublicationFrequency.QUARTERLY.label,
         )
 
-    def test_edit_journal_by_authorized_editor(self):
+    def test_edit_journal_by_unauthorized_editor(self):
         self.journal.assign_editor_role(self.editor, EditorialMember.Role.LINE)
         file = SimpleUploadedFile(name="logo.jpg", content=b"logo.jpg")
         file = {"logo": file}
@@ -309,31 +325,13 @@ class JournalTestcase(GraphQLFileUploadTestMixin, GraphQLTestCase):
 
     def test_edit_journal_information(self):
         information_headings = InformationHeading.objects.all()
-        formatted_information = [
-            {
-                "type": "paragraph",
-                "children": [
-                    {
-                        "text": (
-                            "Upon discovery that the Boquila trifoliolata is capable of flexible leaf mimicry, the question of the"
-                            "mechanism behind this ability has been unanswered. Here, we demonstrate that plant vision possibly"
-                            "via plant-specific ocelli is a plausible hypothesis. A simple experiment by placing an artificial vine model"
-                            "above the living plants has shown that these will attempt to mimic the artificial leaves. The experiment"
-                            "has been carried out with multiple plants, and each plant has shown attempts at mimicry. It was observed"
-                            "that mimic leaves showed altered leaf areas, perimeters, lengths, and widths compared to non-mimic"
-                            "leaves. We have calculated four morphometrical features and observed that mimic leaves showed higher"
-                        )
-                    }
-                ],
-            }
-        ]
 
         data = {
             "journalId": self.journal.pk,
             "information": [
                 {
                     "headingId": str(heading.pk),
-                    "content": json.dumps(formatted_information),
+                    "content": json.dumps(self.formatted_information),
                 }
                 for heading in information_headings
             ],
@@ -371,35 +369,16 @@ class JournalTestcase(GraphQLFileUploadTestMixin, GraphQLTestCase):
             data["information"][1]["headingId"],
         )
 
-    def test_edit_journal_information_by_authorized_editor(self):
+    def test_edit_journal_information_by_unauthorized_editor(self):
         information_headings = InformationHeading.objects.all()
         self.journal.assign_editor_role(self.editor, EditorialMember.Role.LINE)
-
-        formatted_information = [
-            {
-                "type": "paragraph",
-                "children": [
-                    {
-                        "text": (
-                            "Upon discovery that the Boquila trifoliolata is capable of flexible leaf mimicry, the question of the"
-                            "mechanism behind this ability has been unanswered. Here, we demonstrate that plant vision possibly"
-                            "via plant-specific ocelli is a plausible hypothesis. A simple experiment by placing an artificial vine model"
-                            "above the living plants has shown that these will attempt to mimic the artificial leaves. The experiment"
-                            "has been carried out with multiple plants, and each plant has shown attempts at mimicry. It was observed"
-                            "that mimic leaves showed altered leaf areas, perimeters, lengths, and widths compared to non-mimic"
-                            "leaves. We have calculated four morphometrical features and observed that mimic leaves showed higher"
-                        )
-                    }
-                ],
-            }
-        ]
 
         data = {
             "journalId": self.journal.pk,
             "information": [
                 {
                     "headingId": str(heading.pk),
-                    "content": json.dumps(formatted_information),
+                    "content": json.dumps(self.formatted_information),
                 }
                 for heading in information_headings
             ],
@@ -515,3 +494,122 @@ class JournalTestcase(GraphQLFileUploadTestMixin, GraphQLTestCase):
             content["errors"][0]["message"],
             "You do not have permission to perform this action",
         )
+
+    def test_get_a_journal(self):
+        data = {"id": self.journal.pk}
+
+        response = self.query(
+            """
+            query GetJournal($id: ID !) {
+                journal(id: $id) {
+                    id
+                    name
+                    slug
+                    publicationStartDate
+                    isoAbbreviation
+                    logo
+                }
+            }
+            """,
+            operation_name="GetJournal",
+            variables=data,
+            headers=self.editor_headers,
+        )
+
+        self.assertResponseNoErrors(response)
+
+        content = json.loads(response.content)["data"]
+
+        self.assertEqual(content["journal"]["name"], self.journal.name)
+        self.assertEqual(content["journal"]["slug"], self.journal.slug)
+        self.assertEqual(
+            content["journal"]["publicationStartDate"],
+            self.journal.publication_start_date.strftime("%Y-%m-%d"),
+        )
+
+    def test_get_journal_information(self):
+        JournalInformation.objects.filter(journal=self.journal).update(
+            content=self.formatted_information
+        )
+
+        data = {
+            "journalId": self.journal.pk,
+        }
+
+        response = self.query(
+            """
+            query GetJournalInformation($journalId: ID !) {
+                journalInformation(journalId: $journalId) {
+                    id
+                    content
+                    heading {
+                        name
+                    }
+                    journal {
+                        id
+                    }
+                }
+            }
+            """,
+            operation_name="GetJournalInformation",
+            variables=data,
+            headers=self.editor_headers,
+        )
+
+        self.assertResponseNoErrors(response)
+
+        content = json.loads(response.content)["data"]
+
+        self.assertEqual(len(content["journalInformation"]), self.n_info_heading)
+        self.assertEqual(
+            content["journalInformation"][0]["heading"]["name"],
+            self.information_headings[0].name,
+        )
+        self.assertEqual(
+            content["journalInformation"][1]["content"],
+            json.dumps(self.formatted_information),
+        )
+        self.assertEqual(
+            content["journalInformation"][2]["journal"]["id"], str(self.journal.pk)
+        )
+
+    def test_get_a_journal_subject_areas(self):
+        n_subject_areas = 10
+
+        mixer.cycle(n_subject_areas).blend(JournalSubjectArea, journal=self.journal)
+
+        subject_areas = JournalSubjectArea.objects.all()
+
+        data = {
+            "journalId": self.journal.pk,
+        }
+
+        response = self.query(
+            """
+            query GetJournalSubjectAreas($journalId: ID !) {
+                subjectAreas(journalId: $journalId) {
+                    id
+                    name
+                    journal {
+                        id
+                    }
+                }
+            }
+            """,
+            operation_name="GetJournalSubjectAreas",
+            variables=data,
+            headers=self.editor_headers,
+        )
+
+        self.assertResponseNoErrors(response)
+
+        content = json.loads(response.content)["data"]
+
+        self.assertEqual(len(content["subjectAreas"]), n_subject_areas)
+        self.assertEqual(
+            content["subjectAreas"][2]["journal"]["id"], str(self.journal.pk)
+        )
+        self.assertEqual(content["subjectAreas"][2]["name"], subject_areas[2].name)
+        self.assertEqual(content["subjectAreas"][3]["name"], subject_areas[3].name)
+        self.assertEqual(content["subjectAreas"][4]["name"], subject_areas[4].name)
+        self.assertEqual(content["subjectAreas"][5]["name"], subject_areas[5].name)

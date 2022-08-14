@@ -193,6 +193,11 @@ class JournalSubjectArea(models.Model):
         verbose_name = _("journal subject")
         verbose_name_plural = _("journal subjects")
         ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "journal"], name="unique_journal_subject_areas"
+            )
+        ]
 
     def __str__(self) -> str:
         return self.name
