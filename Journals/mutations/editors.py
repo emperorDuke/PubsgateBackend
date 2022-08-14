@@ -6,7 +6,7 @@ from graphql.error import GraphQLError
 from graphql_jwt.decorators import login_required, staff_member_required
 
 from ..models import Editor, Journal, RecruitmentApplication
-from ..nodes import Editor as EditorNode
+from ..nodes import Editor as EditorType
 from ..permissions.editors import editor_in_chief_required
 
 
@@ -53,7 +53,7 @@ class AcceptEditorMutation(graphene.Mutation):
 
 
 class CreateEditorMutation(graphene.Mutation):
-    editor = graphene.Field(EditorNode)
+    editor = graphene.Field(EditorType)
     message = graphene.String()
 
     class Arguments:
@@ -114,7 +114,7 @@ class AdminCreateEditorMutation(graphene.Mutation):
     Admin portal for creation of a new editor
     """
 
-    editor = graphene.Field(EditorNode)
+    editor = graphene.Field(EditorType)
     message = graphene.String()
 
     class Arguments:

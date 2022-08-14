@@ -24,7 +24,7 @@ from Journals.models import (
 )
 from Journals.nodes import (
     Journal as JournalType,
-    Editor as EditorNode,
+    Editor as EditorType,
     ReviewerNode,
     JournalReportQuestionNode,
 )
@@ -157,15 +157,15 @@ def dependencies(cls):
         "journalId": to_global_id(JournalType, cls.journal.pk),
         "editors": [
             {
-                "editorId": to_global_id(EditorNode, cls.editors[0].pk),
+                "editorId": to_global_id(EditorType, cls.editors[0].pk),
                 "role": EditorialMember.Role.COPY.name,
             },
             {
-                "editorId": to_global_id(EditorNode, cls.editors[1].pk),
+                "editorId": to_global_id(EditorType, cls.editors[1].pk),
                 "role": EditorialMember.Role.LINE.name,
             },
             {
-                "editorId": to_global_id(EditorNode, cls.editors[2].pk),
+                "editorId": to_global_id(EditorType, cls.editors[2].pk),
                 "role": EditorialMember.Role.SECTION.name,
             },
         ],

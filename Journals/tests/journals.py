@@ -495,6 +495,32 @@ class JournalTestcase(GraphQLFileUploadTestMixin, GraphQLTestCase):
             "You do not have permission to perform this action",
         )
 
+    def test_get_all_journals(self):
+        journals = mixer.cycle(10).blend(Journal)
+
+        response = self.query(
+            """
+            query GetAllJournal {
+                journals {
+                    id
+                    name
+                    slug
+                    publicationStartDate
+                    isoAbbreviation
+                    logo
+                }
+            }
+            """,
+            operation_name="GetAllJournal",
+            headers=self.editor_headers,
+        )
+
+        self.assertResponseNoErrors(response)
+
+        content = json.loads(response.content)["data"]
+
+        self.assertEqual(len(content["journals"]), len(journals) + 1)
+
     def test_get_a_journal(self):
         data = {"id": self.journal.pk}
 
