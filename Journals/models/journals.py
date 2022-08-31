@@ -74,6 +74,9 @@ class Journal(models.Model):
         """
         Create the editorial member role and assign editor to it
         """
+        if self.editorial_members.filter(role=1).exists():
+            raise GraphQLError("an editor-in-chief already exists")
+
         member = self.editorial_members.create(
             role=1,
             editor=editor,

@@ -42,7 +42,7 @@ class EditorialMember(Role):
     editor = models.ForeignKey(
         Editor,
         related_name="journal_roles",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         blank=True,
         null=True,
     )
