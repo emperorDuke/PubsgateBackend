@@ -33,10 +33,10 @@ class AcceptEditorMutation(graphene.Mutation):
             role=RecruitmentApplication.Role.EDITOR,
         )
 
-        url = "/editor/application?JID={0}".format(journal_id)
+        url = "/accounts/editor/signup?jid={0}".format(journal_id)
 
         from_email = "{0}@pubsgate.com".format(journal.name)
-        subject = "Invitation to be a reviewer for {0} journal".format(journal.name)
+        subject = "Acceptance of editoral role in {0} journal".format(journal.name)
         text_content = "Application is accepted"
         to = [email]
         html_content = (
