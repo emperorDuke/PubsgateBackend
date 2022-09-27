@@ -1,5 +1,9 @@
+from datetime import datetime, timedelta, timezone
+
 import graphene
+import jwt
 from Cores.models import Discipline
+from django.contrib.auth.hashers import check_password
 from django.shortcuts import get_object_or_404
 from graphene_file_upload.scalars import Upload
 from graphql import GraphQLError
@@ -13,11 +17,13 @@ from ..inputTypes.journals import (
 from ..models import (
     Editor,
     Journal,
+    JournalAuthToken,
     JournalInformation,
     JournalSubjectArea,
 )
-from ..nodes import Journal as JournalType, JournalInformation as JournalInformationType
-from ..permissions import editor_in_chief_required
+from ..nodes import Journal as JournalType
+from ..nodes import JournalInformation as JournalInformationType
+from ..permissions import editor_in_chief_required, editor_is_required
 
 
 class CreateJournalMutation(graphene.Mutation):
@@ -144,8 +150,64 @@ class TransferJournalManagementMutation(graphene.Mutation):
         if not editor:
             raise GraphQLError("manager is not an editor")
 
-        journal = Journal.objects.get(pk=journal_id)
+        journal = get_object_or_404(Journal, pk=journal_id)
 
         journal.make_editor_chief(editor)
 
         return TransferJournalManagementMutation(message="success")
+
+
+class LoginJournalManagerMutation(graphene.Mutation):
+    token = graphene.String()
+    message = graphene.String()
+
+    class Arguments:
+        journal_id = graphene.ID(required=True)
+        password = graphene.String(required=True)
+
+    @editor_is_required
+    @login_required
+    def mutate(root, info, **kwargs):
+        user = info.context.user
+
+        journal_id = kwargs.pop("journal_id")
+        password = kwargs.pop("password")
+
+        journal = get_object_or_404(Journal, pk=journal_id)
+        member = journal.editorial_members.filter(editor=user.editor).first()
+
+        if check_password(password, member.access_login):
+            exp = datetime.now(tz=timezone.utc) + timedelta(days=1)
+            iat = datetime.now(tz=timezone.utc)
+            iss = journal.name
+
+            payload = {"email": user.email, "exp": exp, "iss": iss, "iat": iat}
+
+            encoded = jwt.encode(payload, journal.secret)
+
+            JournalAuthToken.objects.create(
+                token=encoded,
+                journal=journal,
+            )
+
+        return LoginJournalManagerMutation(message="success", token=encoded)
+
+
+class LogoutJournalManagerMutation(graphene.Mutation):
+    message = graphene.String()
+
+    class Arguments:
+        token = graphene.String(required=True)
+
+    @editor_is_required
+    @login_required
+    def mutate(root, info, **kwargs):
+        token = kwargs.get("token")
+        
+        try:
+            JournalAuthToken.objects.filter(token=token).delete()
+            message = "success"
+        except:
+            message = "error"
+
+        return LogoutJournalManagerMutation(message=message)

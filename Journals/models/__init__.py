@@ -1,4 +1,4 @@
-from .editors import Editor
+from .editors import Editor, EditorJournalActivity
 from .journals import (
     Journal,
     JournalPermission,
@@ -10,6 +10,7 @@ from .journals import (
     JournalVolumeIssue,
     JournalReportQuestion,
     RecruitmentApplication,
+    JournalAuthToken,
 )
 from .roles import Role, EditorialMember
 from .reviewers import Reviewer

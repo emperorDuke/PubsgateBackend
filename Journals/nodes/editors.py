@@ -10,7 +10,7 @@ class Editor(DjangoObjectType):
             "id",
             "affiliation",
             "phone_number",
-            "started_at",
+            "created_at",
             "user",
             "specialisation",
         ]

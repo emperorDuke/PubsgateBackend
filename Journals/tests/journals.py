@@ -4,6 +4,7 @@ import time
 from Cores.models import Discipline, InformationHeading
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.utils import timezone
 from django.core.files.uploadedfile import SimpleUploadedFile
 from graphene_django.utils.testing import GraphQLTestCase
 from graphene_file_upload.django.testing import GraphQLFileUploadTestMixin

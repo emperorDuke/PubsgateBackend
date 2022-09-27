@@ -70,6 +70,10 @@ class Journal(models.Model):
 
         super(Journal, self).save(*args, **kwargs)
 
+    @property
+    def secret(self):
+        return "s%-s%-s%" % (self.name, self.issn, self.created_at)
+
     def make_editor_chief(self, editor):
         """
         Create the editorial member role and assign editor to it
@@ -262,7 +266,35 @@ class JournalInformation(models.Model):
         return self.heading.name
 
 
+class JournalAuthToken(models.Model):
+    """
+    Journal auth management
+    """
+
+    token = models.CharField(max_length=255)
+    journal = models.ForeignKey(
+        Journal, related_name="auth_tokens", on_delete=models.CASCADE
+    )
+
+    class Meta:
+        db_table = "journal_auth_tokens"
+        verbose_name_plural = "journal_auth_tokens"
+        verbose_name = "journal_auth_token"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["token", "journal"], name="unique_journal_tokens"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return self.token
+
+
 class JournalViewLog(models.Model):
+    """
+    Journal view logs
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     ip_address = models.GenericIPAddressField(_("ip_address"))
     user = models.ForeignKey(

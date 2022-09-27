@@ -18,6 +18,7 @@ from ..models.journals import (
 class Journal(DjangoObjectType):
     discipline = graphene.Field(SubjectDisciplineNode)
     publication_frequency = graphene.String()
+    editor_last_login = graphene.DateTime()
 
     class Meta:
         model = JournalModel
@@ -29,7 +30,9 @@ class Journal(DjangoObjectType):
             "publication_start_date",
             "iso_abbreviation",
             "logo",
+            "issn",
             "access_options",
+            "editor_last_login",
         )
 
     def resolve_discipline(self, info):
@@ -37,6 +40,9 @@ class Journal(DjangoObjectType):
 
     def resolve_publication_frequency(self, info):
         return self.get_publication_frequency_display()
+
+    def resolve_last_login(self, info):
+        return self.editor_last_login
 
 
 class JournalInformation(DjangoObjectType):

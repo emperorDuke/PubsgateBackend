@@ -241,3 +241,40 @@ class EditorTestcase(GraphQLTestCase):
         self.assertEqual(content["user"]["firstName"], editors[0].user.first_name)
         self.assertEqual(content["user"]["lastName"], editors[0].user.last_name)
         self.assertEqual(content["user"]["email"], editors[0].user.email)
+
+    def test_get_editor_journals(self):
+        editor = mixer.blend(Editor, user=self.user)
+
+        editor.journals.add(self.journal)
+
+        response = self.query(
+            """
+            query GetEditorJournals {
+                editorJournals {
+                    id
+                    name
+                    slug
+                    issn
+                    isoAbbreviation
+                    logo
+                    editorLastLogin
+                }
+            }
+        """,
+            operation_name="GetEditorJournals",
+            headers=self.headers,
+        )
+
+        self.assertResponseNoErrors(response)
+
+        content = json.loads(response.content)["data"]["editorJournals"]
+
+        self.assertEqual(len(content), editor.journals.count())
+        self.assertEqual(content[0]["name"], self.journal.name)
+        self.assertEqual(content[0]["id"], str(self.journal.id))
+        self.assertEqual(
+            content[0]["editorLastLogin"],
+            self.journal.editor_activities.filter(editor=editor)
+            .first()
+            .last_login.isoformat(),
+        )
